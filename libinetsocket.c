@@ -108,6 +108,7 @@
 #ifdef __FreeBSD__
 #define _TRADITIONAL_RDNS
 #endif
+
 static inline signed int check_error(int return_value) {
 #ifdef VERBOSE
     const char *errbuf;
@@ -196,8 +197,13 @@ int create_inet_stream_socket(const char *host, const char *service,
 
         int CON_RES = connect(sfd, result_check->ai_addr,
                               result_check->ai_addrlen);
-        if ((CON_RES != -1) || (CON_RES == -1 && (flags |= SOCK_NONBLOCK) && ((errno == EINPROGRESS) || (errno == EALREADY) || (errno == EINTR))))     // connected without error, or, connected with errno being one of these important states
-             break;
+        if ((CON_RES != -1) || (CON_RES == -1 && 
+#if defined(_WIN32)
+            ((WSAGetLastError() == WSAEINPROGRESS) || (WSAGetLastError() == WSAEPROVIDERFAILEDINIT) || (WSAGetLastError() == WSAENETDOWN ))))
+#elif defined(linux)
+            (flags |= SOCK_NONBLOCK) && ((errno == EINPROGRESS) || (errno == EALREADY) || (errno == EINTR))))     // connected without error, or, connected with errno being one of these important states
+#endif
+              break;
        
         close(sfd);
     }
