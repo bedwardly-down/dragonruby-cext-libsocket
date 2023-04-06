@@ -55,21 +55,25 @@
 #include <mruby/data.h>
 #include <dragonruby.h>
 #include <errno.h>
-#ifdef linux
+#if defined(_WIN32)
+#define _WINSOCKAPI_
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#elif defined(linux)
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netdb.h>       // getaddrinfo()
 #include <netinet/in.h>  // e.g. struct sockaddr_in on OpenBSD
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <unistd.h>  // read()/write()
 #endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>  // read()/write()
 #include "libinetsocket.h"
 #include "libinetsocket.c"
-
 
 static drb_api_t *drb_api;
 

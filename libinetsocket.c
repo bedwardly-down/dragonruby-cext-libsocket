@@ -138,6 +138,13 @@ static inline signed int check_error(int return_value) {
  */
 int create_inet_stream_socket(const char *host, const char *service,
                               char proto_osi3, int flags) {
+#ifdef _WIN32
+    WSADATA d;
+    if (WSAStartup(MAKEWORD(2, 2), &d)) {
+      fprintf(stderr, "Failed to initialize.\n");
+    }
+#endif
+
     int sfd, return_value;
     struct addrinfo hint, *result, *result_check;
 #ifdef VERBOSE
@@ -233,6 +240,13 @@ int create_inet_stream_socket(const char *host, const char *service,
  * sendto_inet_dgram_socket() and recvfrom_inet_dgram_socket().
  */
 int create_inet_dgram_socket(char proto_osi3, int flags) {
+#ifdef _WIN32
+    WSADATA d;
+    if (WSAStartup(MAKEWORD(2, 2), &d)) {
+      fprintf(stderr, "Failed to initialize.\n");
+    }
+#endif
+
     int sfd;
 
     if (proto_osi3 != LIBSOCKET_IPv4 && proto_osi3 != LIBSOCKET_IPv6) {
