@@ -65,11 +65,11 @@
 #endif
 
 #define LIBSOCKET_VERSION 2.4
-#ifdef BD_ANDROID
+/* #if defined BD_ANDROID
 #define LIBSOCKET_LINUX 0
 #else
 #define LIBSOCKET_LINUX 1
-#endif
+#endif */
 
 /* Macro definitions */
 
@@ -109,6 +109,17 @@
         write(2, str, strlen(str));     \
         errno = verbose_errno_save;     \
     }
+#endif
+
+/**
+ * For Windows shutdown implementation compatibility
+ *
+ * See here: https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-shutdown (WINAPI)
+ * and here: https://www.man7.org/linux/man-pages/man2/shutdown.2.html (Linux Manpage)
+ */
+#ifdef _WIN32
+#define SHUT_RD SD_RECEIVE
+#define SHUT_WR SD_SEND
 #endif
 
 #ifdef __FreeBSD__
@@ -839,7 +850,8 @@ int accept_inet_stream_socket(int sfd, char *src_host, size_t src_host_len,
     socklen_t addrlen = sizeof(struct sockaddr_storage);
 
     // Portable behavior
-#if LIBSOCKET_LINUX
+//#if LIBSOCKET_LINUX
+#ifdef linux
     if (-1 ==
         check_error((client_sfd = accept4(sfd, (struct sockaddr *)&client_info,
                                           &addrlen, accept_flags))))  // blocks
@@ -991,7 +1003,7 @@ int get_address_family(const char *hostname) {
  * @retval >=0 A valid file descriptor.
  *
  */
-#ifdef LIBSOCKET_LINUX
+#ifdef linux
 int create_multicast_socket(const char *group, const char *port,
                             const char *if_name) {
     int sfd, return_value;

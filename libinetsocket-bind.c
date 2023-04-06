@@ -59,7 +59,6 @@
 #define _WINSOCKAPI_
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
 #elif defined(linux)
 #include <sys/socket.h>
 #include <net/if.h>
@@ -354,7 +353,9 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_module_function(state, module, "create_inet_server_socket", drb_ffi_create_inet_server_socket_Binding, MRB_ARGS_REQ(5));
     drb_api->mrb_define_module_function(state, module, "accept_inet_stream_socket", drb_ffi_accept_inet_stream_socket_Binding, MRB_ARGS_REQ(7));
     drb_api->mrb_define_module_function(state, module, "get_address_family", drb_ffi_get_address_family_Binding, MRB_ARGS_REQ(1));
+#ifdef linux
     drb_api->mrb_define_module_function(state, module, "create_multicast_socket", drb_ffi_create_multicast_socket_Binding, MRB_ARGS_REQ(3));
+#endif
     struct RClass *CharPointerClass = drb_api->mrb_define_class_under(state, module, "CharPointer", object_class);
     drb_api->mrb_define_class_method(state, CharPointerClass, "new", drb_ffi__ZTSPc_New, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, CharPointerClass, "value", drb_ffi__ZTSPc_GetValue, MRB_ARGS_REQ(0));
