@@ -10,13 +10,13 @@
 
 /*
    The committers of the libsocket project, all rights reserved
-   (c) 2012, dermesser <lbo@spheniscida.de>
-
+   (c) 2012 and following, dermesser <lbo@spheniscida.de>
+ 
    DragonRuby is a registered trademark of DragonRuby LLP 
-   (c) 2012, amirrajan <amir.rajan@dragonruby.org>
-
-   The bindings below fall under the same license as libinetsocket
-   (c) 2023, bedwardly-down <social@brandongrows.me>
+   (c) 2012 and following, amirrajan <amir.rajan@dragonruby.org>
+ 
+   Miscellaneous code updates for this plugin that were not originally a part of libsocket
+   (c) 2023 and following, bedwardly-down <social@brandongrows.me>
 
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are met:

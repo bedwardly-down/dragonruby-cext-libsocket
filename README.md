@@ -8,7 +8,7 @@ See [here](https://github.com/DragonRuby/dragonruby-game-toolkit-contrib/tree/ma
 
 1) Clone repository as a submodule in your Dragonruby `mygame` directory: 
 
-`git submodule init https://github.com/bedwardly-down/dragonruby-cext-libsocket.git mygame/libsocket`
+`git submodule add https://github.com/bedwardly-down/dragonruby-cext-libsocket.git mygame/libsocket`
     
 2) Build  
 
