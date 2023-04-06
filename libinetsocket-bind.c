@@ -55,15 +55,17 @@
 #include <mruby/data.h>
 #include <dragonruby.h>
 #include <errno.h>
+#ifdef linux
+#include <sys/socket.h>
 #include <net/if.h>
 #include <netdb.h>       // getaddrinfo()
 #include <netinet/in.h>  // e.g. struct sockaddr_in on OpenBSD
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>  // read()/write()
 #include "libinetsocket.h"
 #include "libinetsocket.c"

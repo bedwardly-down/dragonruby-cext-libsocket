@@ -32,8 +32,10 @@
 */
 
 /* Headers (e.g. for flags) */
+#ifdef linux
 #include <sys/socket.h>
 #include <sys/types.h>
+#endif
 
 /* Macro definitions */
 
