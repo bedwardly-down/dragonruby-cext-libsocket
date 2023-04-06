@@ -51,12 +51,6 @@
 
 #define LIBSOCKET_NUMERIC 1
 
-#ifdef __cplusplus
-#ifdef MIXED
-extern "C" {
-#endif
-#endif
-
 extern int create_inet_stream_socket(const char* host, const char* service,
                                      char proto_osi3, int flags);
 extern int create_inet_dgram_socket(char proto_osi3, int flags);
@@ -84,12 +78,6 @@ extern int get_address_family(const char* hostname);
 #ifdef __linux__
 extern int create_multicast_socket(const char* group, const char* port,
                                    const char* local);
-#endif
-
-#ifdef __cplusplus
-#ifdef MIXED
-}
-#endif
 #endif
 
 #endif
