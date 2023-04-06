@@ -97,13 +97,19 @@
 
 /**
  * Writes an error to stderr without modifying errno.
+ *
+ * NOTE: Windows part is a stub. May need to flesh out further.
  */
+#if defined(_WIN32)
+#define debug_write(str) {}
+#elif defined(linux)
 #define debug_write(str)                \
     {                                   \
         int verbose_errno_save = errno; \
         write(2, str, strlen(str));     \
         errno = verbose_errno_save;     \
     }
+#endif
 
 #ifdef __FreeBSD__
 #define _TRADITIONAL_RDNS
@@ -113,10 +119,21 @@ static inline signed int check_error(int return_value) {
 #ifdef VERBOSE
     const char *errbuf;
 #endif
+#if defined(_WIN32)
+    if (return_value == INVALID_SOCKET) {
+#ifdef VERBOSE
+        FomatMessage(
+          FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+          0, WSAGetLastError(), 0, errbuf, 256, 0
+        );
+        debug_write(errbuf);
+#endif
+#elif defined(linux)
     if (return_value < 0) {
 #ifdef VERBOSE
         errbuf = strerror(errno);
         debug_write(errbuf);
+#endif
 #endif
         return -1;
     }
