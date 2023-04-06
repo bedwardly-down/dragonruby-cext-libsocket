@@ -1,27 +1,3 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#define LIBSOCKET_VERSION 2.4
-#ifdef BD_ANDROID
-#define LIBSOCKET_LINUX 0
-#else
-#define LIBSOCKET_LINUX 1
-#endif
-
-#include <errno.h>
-#include <net/if.h>
-#include <netdb.h>       // getaddrinfo()
-#include <netinet/in.h>  // e.g. struct sockaddr_in on OpenBSD
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>  // read()/write()
-
 /**
  * @file    libinetsocket.c
  *

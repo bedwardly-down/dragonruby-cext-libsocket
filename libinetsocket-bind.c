@@ -1,10 +1,72 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#define LIBSOCKET_VERSION 2.4
+#ifdef BD_ANDROID
+#define LIBSOCKET_LINUX 0
+#else
+#define LIBSOCKET_LINUX 1
+#endif
+
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
 #include <mruby/string.h>
 #include <mruby/data.h>
 #include <dragonruby.h>
-#include "socket.c"
+#include <errno.h>
+#include <net/if.h>
+#include <netdb.h>       // getaddrinfo()
+#include <netinet/in.h>  // e.g. struct sockaddr_in on OpenBSD
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>  // read()/write()
+#include "libinetsocket.h"
+#include "libinetsocket.c"
+
+/* Macro definitions */
+
+//# define VERBOSE // Write errors on stderr?
+
+#define LIBSOCKET_BACKLOG \
+    128  ///< Linux accepts a backlog value at listen() up to 128
+
+// Symbolic macros
+#define LIBSOCKET_TCP 1  ///< Protocol flag
+#define LIBSOCKET_UDP 2  ///< Protocol flag
+
+#define LIBSOCKET_IPv4 3  ///< Address family flag
+#define LIBSOCKET_IPv6 4  ///< Adress family flag
+#define LIBSOCKET_BOTH \
+    5  ///< Adress family flag: what fits best (TCP/UDP or IPv4/6; delegate the
+       ///< decision to `getaddrinfo()`)
+
+#define LIBSOCKET_READ 1   ///< Flag for shutdown
+#define LIBSOCKET_WRITE 2  ///< Flag for shutdown
+
+#define LIBSOCKET_NUMERIC \
+    1  ///< May be specified as flag for functions to signalize that the name
+       ///< resolution should not be performed.
+
+/**
+ * Writes an error to stderr without modifying errno.
+ */
+#define debug_write(str)                \
+    {                                   \
+        int verbose_errno_save = errno; \
+        write(2, str, strlen(str));     \
+        errno = verbose_errno_save;     \
+    }
+
+#ifdef __FreeBSD__
+#define _TRADITIONAL_RDNS
+#endif
+
 
 static drb_api_t *drb_api;
 
@@ -158,11 +220,11 @@ static mrb_value drb_ffi_sendto_inet_dgram_socket_Binding(mrb_state *state, mrb_
         drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'sendto_inet_dgram_socket': wrong number of arguments (%d for 6)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     void *buf_1 = drb_ffi__ZTSPv_FromRuby(state, args[1]);
-    int sizem_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
+    size_t sizem_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
     char *hostm_3 = drb_ffi__ZTSPc_FromRuby(state, args[3]);
     char *service_4 = drb_ffi__ZTSPc_FromRuby(state, args[4]);
     int sendto_flags_5 = drb_ffi__ZTSi_FromRuby(state, args[5]);
-    int ret_val = sendto_inet_dgram_socket(sfd_0, buf_1, sizem_2, hostm_3, service_4, sendto_flags_5);
+    ssize_t ret_val = sendto_inet_dgram_socket(sfd_0, buf_1, sizem_2, hostm_3, service_4, sendto_flags_5);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 static mrb_value drb_ffi_recvfrom_inet_dgram_socket_Binding(mrb_state *state, mrb_value value) {
@@ -173,14 +235,14 @@ static mrb_value drb_ffi_recvfrom_inet_dgram_socket_Binding(mrb_state *state, mr
         drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'recvfrom_inet_dgram_socket': wrong number of arguments (%d for 9)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     void *buffer_1 = drb_ffi__ZTSPv_FromRuby(state, args[1]);
-    int size_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
+    size_t size_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
     char *src_host_3 = drb_ffi__ZTSPc_FromRuby(state, args[3]);
-    int src_host_len_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
+    size_t src_host_len_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
     char *src_service_5 = drb_ffi__ZTSPc_FromRuby(state, args[5]);
-    int src_service_len_6 = drb_ffi__ZTSi_FromRuby(state, args[6]);
+    size_t src_service_len_6 = drb_ffi__ZTSi_FromRuby(state, args[6]);
     int recvfrom_flags_7 = drb_ffi__ZTSi_FromRuby(state, args[7]);
     int numeric_8 = drb_ffi__ZTSi_FromRuby(state, args[8]);
-    int ret_val = recvfrom_inet_dgram_socket(sfd_0, buffer_1, size_2, src_host_3, src_host_len_4, src_service_5, src_service_len_6, recvfrom_flags_7, numeric_8);
+    ssize_t ret_val = recvfrom_inet_dgram_socket(sfd_0, buffer_1, size_2, src_host_3, src_host_len_4, src_service_5, src_service_len_6, recvfrom_flags_7, numeric_8);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 static mrb_value drb_ffi_connect_inet_dgram_socket_Binding(mrb_state *state, mrb_value value) {
@@ -238,9 +300,9 @@ static mrb_value drb_ffi_accept_inet_stream_socket_Binding(mrb_state *state, mrb
         drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'accept_inet_stream_socket': wrong number of arguments (%d for 7)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     char *src_host_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
-    int src_host_len_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
+    size_t src_host_len_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
     char *src_service_3 = drb_ffi__ZTSPc_FromRuby(state, args[3]);
-    int src_service_len_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
+    size_t src_service_len_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
     int flags_5 = drb_ffi__ZTSi_FromRuby(state, args[5]);
     int accept_flags_6 = drb_ffi__ZTSi_FromRuby(state, args[6]);
     int ret_val = accept_inet_stream_socket(sfd_0, src_host_1, src_host_len_2, src_service_3, src_service_len_4, flags_5, accept_flags_6);
