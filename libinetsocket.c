@@ -37,6 +37,20 @@
 
 */
 
+/**
+ * @brief Checks return value for error.
+ *
+ * Every value returned by a syscall is passed to this function. It returns 0
+ * if the return value is ok or -1 if there was an error.
+ * If the macro `VERBOSE` is defined, an appropriate message is printed to
+ * STDERR.
+ *
+ * @param return_value A return value from a syscall.
+ *
+ * @retval 0 The syscall was successful.
+ * @retval -1 There was an error.
+ */
+
 /*
  * Structure of the functions defined here:
  *
@@ -45,6 +59,17 @@
  * <actual code>
  *
  */
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#define LIBSOCKET_VERSION 2.4
+#ifdef BD_ANDROID
+#define LIBSOCKET_LINUX 0
+#else
+#define LIBSOCKET_LINUX 1
+#endif
 
 /* Macro definitions */
 
@@ -83,20 +108,6 @@
 #ifdef __FreeBSD__
 #define _TRADITIONAL_RDNS
 #endif
-
-/**
- * @brief Checks return value for error.
- *
- * Every value returned by a syscall is passed to this function. It returns 0
- * if the return value is ok or -1 if there was an error.
- * If the macro `VERBOSE` is defined, an appropriate message is printed to
- * STDERR.
- *
- * @param return_value A return value from a syscall.
- *
- * @retval 0 The syscall was successful.
- * @retval -1 There was an error.
- */
 static inline signed int check_error(int return_value) {
 #ifdef VERBOSE
     const char *errbuf;

@@ -1,13 +1,52 @@
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
+/**
+ * @file    libinetsocket-bind.c
+ *
+ * @brief Contains the DragonRuby Game Toolkit FFI bindings.
+ *
+ * This file allows DragonRuby to interact with libinetsocket. 
+ * Don't directly call these functions in DragonRuby but instead
+ * see libinetsocket.c for the correct implementations and docs.
+ * Any changes made there must be manually updated here for them
+ * to take affect. Also, include all headers here so they get found
+ * and used properly.
+ */
 
-#define LIBSOCKET_VERSION 2.4
-#ifdef BD_ANDROID
-#define LIBSOCKET_LINUX 0
-#else
-#define LIBSOCKET_LINUX 1
-#endif
+/**
+ * @addtogroup libinetsocket
+ * @{
+ */
+
+/*
+   The committers of the libsocket project, all rights reserved
+   (c) 2012, dermesser <lbo@spheniscida.de>
+
+   DragonRuby is a registered trademark of DragonRuby LLP 
+   (c) 2012, amirrajan <amir.rajan@dragonruby.org>
+
+   The bindings below fall under the same license as libinetsocket
+   (c) 2023, bedwardly-down <social@brandongrows.me>
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+   THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS “AS IS” AND ANY
+   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
 
 #include <mruby.h>
 #include <string.h>
@@ -28,44 +67,6 @@
 #include <unistd.h>  // read()/write()
 #include "libinetsocket.h"
 #include "libinetsocket.c"
-
-/* Macro definitions */
-
-//# define VERBOSE // Write errors on stderr?
-
-#define LIBSOCKET_BACKLOG \
-    128  ///< Linux accepts a backlog value at listen() up to 128
-
-// Symbolic macros
-#define LIBSOCKET_TCP 1  ///< Protocol flag
-#define LIBSOCKET_UDP 2  ///< Protocol flag
-
-#define LIBSOCKET_IPv4 3  ///< Address family flag
-#define LIBSOCKET_IPv6 4  ///< Adress family flag
-#define LIBSOCKET_BOTH \
-    5  ///< Adress family flag: what fits best (TCP/UDP or IPv4/6; delegate the
-       ///< decision to `getaddrinfo()`)
-
-#define LIBSOCKET_READ 1   ///< Flag for shutdown
-#define LIBSOCKET_WRITE 2  ///< Flag for shutdown
-
-#define LIBSOCKET_NUMERIC \
-    1  ///< May be specified as flag for functions to signalize that the name
-       ///< resolution should not be performed.
-
-/**
- * Writes an error to stderr without modifying errno.
- */
-#define debug_write(str)                \
-    {                                   \
-        int verbose_errno_save = errno; \
-        write(2, str, strlen(str));     \
-        errno = verbose_errno_save;     \
-    }
-
-#ifdef __FreeBSD__
-#define _TRADITIONAL_RDNS
-#endif
 
 
 static drb_api_t *drb_api;
