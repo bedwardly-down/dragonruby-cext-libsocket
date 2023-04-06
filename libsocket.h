@@ -1,7 +1,7 @@
-#ifndef LIBSOCKET_LIBINETSOCKET_H_C1A9FFEDF5E94B2FB010A0FAA0E92A2F
-#define LIBSOCKET_LIBINETSOCKET_H_C1A9FFEDF5E94B2FB010A0FAA0E92A2F
+#ifndef LIBSOCKET_LIBSOCKET_H_fd63af129e628ea2ab25d6f71fd2798b3fa4556b
+#define LIBSOCKET_LIBSOCKET_H_fd63af129e628ea2ab25d6f71fd2798b3fa4556b
 /**
- * @file libinetsocket.h
+ * @file libsocket.h
  *
  * @brief Contains all functions available in the C libsocket.
  *
@@ -9,6 +9,12 @@
 /*
         The committers of the libsocket project, all rights reserved
         (c) 2012, dermesser <lbo@spheniscida.de>
+
+        DragonRuby is a registered trademark of DragonRuby LLP 
+        (c) 2012, amirrajan <amir.rajan@dragonruby.org>
+
+        The bindings below fall under the same license as libinetsocket
+        (c) 2023, bedwardly-down <social@brandongrows.me>
 
         Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are met:
@@ -77,7 +83,7 @@ extern int accept_inet_stream_socket(int sfd, char* src_host,
                                      int accept_flags);
 extern int get_address_family(const char* hostname);
 
-#ifdef __linux__
+#ifdef linux
 extern int create_multicast_socket(const char* group, const char* port,
                                    const char* local);
 #endif

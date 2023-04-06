@@ -1,5 +1,5 @@
 /**
- * @file    libinetsocket-bind.c
+ * @file    libsocket-bind.c
  *
  * @brief Contains the DragonRuby Game Toolkit FFI bindings.
  *
@@ -9,11 +9,6 @@
  * Any changes made there must be manually updated here for them
  * to take affect. Also, include all headers here so they get found
  * and used properly.
- */
-
-/**
- * @addtogroup libinetsocket
- * @{
  */
 
 /*
@@ -71,8 +66,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "libinetsocket.h"
-#include "libinetsocket.c"
+#include "libsocket.h"
+#include "libsocket.c"
 
 static drb_api_t *drb_api;
 
@@ -194,51 +189,51 @@ static mrb_value drb_ffi_check_error_Binding(mrb_state *state, mrb_value value) 
     int ret_val = check_error(return_value_0);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_create_inet_stream_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_create_stream_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 4)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'create_inet_stream_socket': wrong number of arguments (%d for 4)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'create_stream_socket': wrong number of arguments (%d for 4)", argc);
     char *host_0 = drb_ffi__ZTSPc_FromRuby(state, args[0]);
     char *service_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     char proto_osi3_2 = drb_ffi__ZTSc_FromRuby(state, args[2]);
     int flags_3 = drb_ffi__ZTSi_FromRuby(state, args[3]);
-    int ret_val = create_inet_stream_socket(host_0, service_1, proto_osi3_2, flags_3);
+    int ret_val = create_stream_socket(host_0, service_1, proto_osi3_2, flags_3);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_create_inet_dgram_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_create_dgram_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 2)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'create_inet_dgram_socket': wrong number of arguments (%d for 2)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'create_dgram_socket': wrong number of arguments (%d for 2)", argc);
     char proto_osi3_0 = drb_ffi__ZTSc_FromRuby(state, args[0]);
     int flags_1 = drb_ffi__ZTSi_FromRuby(state, args[1]);
-    int ret_val = create_inet_dgram_socket(proto_osi3_0, flags_1);
+    int ret_val = create_dgram_socket(proto_osi3_0, flags_1);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_sendto_inet_dgram_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_sendto_dgram_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 6)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'sendto_inet_dgram_socket': wrong number of arguments (%d for 6)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'sendto_dgram_socket': wrong number of arguments (%d for 6)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     void *buf_1 = drb_ffi__ZTSPv_FromRuby(state, args[1]);
     size_t sizem_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
     char *hostm_3 = drb_ffi__ZTSPc_FromRuby(state, args[3]);
     char *service_4 = drb_ffi__ZTSPc_FromRuby(state, args[4]);
     int sendto_flags_5 = drb_ffi__ZTSi_FromRuby(state, args[5]);
-    ssize_t ret_val = sendto_inet_dgram_socket(sfd_0, buf_1, sizem_2, hostm_3, service_4, sendto_flags_5);
+    ssize_t ret_val = sendto_dgram_socket(sfd_0, buf_1, sizem_2, hostm_3, service_4, sendto_flags_5);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_recvfrom_inet_dgram_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_recvfrom_dgram_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 9)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'recvfrom_inet_dgram_socket': wrong number of arguments (%d for 9)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'recvfrom_dgram_socket': wrong number of arguments (%d for 9)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     void *buffer_1 = drb_ffi__ZTSPv_FromRuby(state, args[1]);
     size_t size_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
@@ -248,62 +243,62 @@ static mrb_value drb_ffi_recvfrom_inet_dgram_socket_Binding(mrb_state *state, mr
     size_t src_service_len_6 = drb_ffi__ZTSi_FromRuby(state, args[6]);
     int recvfrom_flags_7 = drb_ffi__ZTSi_FromRuby(state, args[7]);
     int numeric_8 = drb_ffi__ZTSi_FromRuby(state, args[8]);
-    ssize_t ret_val = recvfrom_inet_dgram_socket(sfd_0, buffer_1, size_2, src_host_3, src_host_len_4, src_service_5, src_service_len_6, recvfrom_flags_7, numeric_8);
+    ssize_t ret_val = recvfrom_dgram_socket(sfd_0, buffer_1, size_2, src_host_3, src_host_len_4, src_service_5, src_service_len_6, recvfrom_flags_7, numeric_8);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_connect_inet_dgram_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_connect_dgram_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 3)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'connect_inet_dgram_socket': wrong number of arguments (%d for 3)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'connect_dgram_socket': wrong number of arguments (%d for 3)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     char *host_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     char *service_2 = drb_ffi__ZTSPc_FromRuby(state, args[2]);
-    int ret_val = connect_inet_dgram_socket(sfd_0, host_1, service_2);
+    int ret_val = connect_dgram_socket(sfd_0, host_1, service_2);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_destroy_inet_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_destroy_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 1)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'destroy_inet_socket': wrong number of arguments (%d for 1)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'destroy_socket': wrong number of arguments (%d for 1)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
-    int ret_val = destroy_inet_socket(sfd_0);
+    int ret_val = destroy_socket(sfd_0);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_shutdown_inet_stream_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_shutdown_stream_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 2)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'shutdown_inet_stream_socket': wrong number of arguments (%d for 2)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'shutdown_stream_socket': wrong number of arguments (%d for 2)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     int method_1 = drb_ffi__ZTSi_FromRuby(state, args[1]);
-    int ret_val = shutdown_inet_stream_socket(sfd_0, method_1);
+    int ret_val = shutdown_stream_socket(sfd_0, method_1);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_create_inet_server_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_create_server_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 5)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'create_inet_server_socket': wrong number of arguments (%d for 5)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'create_server_socket': wrong number of arguments (%d for 5)", argc);
     char *bind_addr_0 = drb_ffi__ZTSPc_FromRuby(state, args[0]);
     char *bind_port_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     char proto_osi4_2 = drb_ffi__ZTSc_FromRuby(state, args[2]);
     char proto_osi3_3 = drb_ffi__ZTSc_FromRuby(state, args[3]);
     int flags_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
-    int ret_val = create_inet_server_socket(bind_addr_0, bind_port_1, proto_osi4_2, proto_osi3_3, flags_4);
+    int ret_val = create_server_socket(bind_addr_0, bind_port_1, proto_osi4_2, proto_osi3_3, flags_4);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
-static mrb_value drb_ffi_accept_inet_stream_socket_Binding(mrb_state *state, mrb_value value) {
+static mrb_value drb_ffi_accept_stream_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 7)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'accept_inet_stream_socket': wrong number of arguments (%d for 7)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'accept_stream_socket': wrong number of arguments (%d for 7)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
     char *src_host_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     size_t src_host_len_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
@@ -311,7 +306,7 @@ static mrb_value drb_ffi_accept_inet_stream_socket_Binding(mrb_state *state, mrb
     size_t src_service_len_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
     int flags_5 = drb_ffi__ZTSi_FromRuby(state, args[5]);
     int accept_flags_6 = drb_ffi__ZTSi_FromRuby(state, args[6]);
-    int ret_val = accept_inet_stream_socket(sfd_0, src_host_1, src_host_len_2, src_service_3, src_service_len_4, flags_5, accept_flags_6);
+    int ret_val = accept_stream_socket(sfd_0, src_host_1, src_host_len_2, src_service_3, src_service_len_4, flags_5, accept_flags_6);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 static mrb_value drb_ffi_get_address_family_Binding(mrb_state *state, mrb_value value) {
@@ -343,15 +338,15 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     struct RClass *module = drb_api->mrb_define_module_under(state, FFI, "SOCKET");
     struct RClass *object_class = state->object_class;
     drb_api->mrb_define_module_function(state, module, "check_error", drb_ffi_check_error_Binding, MRB_ARGS_REQ(1));
-    drb_api->mrb_define_module_function(state, module, "create_inet_stream_socket", drb_ffi_create_inet_stream_socket_Binding, MRB_ARGS_REQ(4));
-    drb_api->mrb_define_module_function(state, module, "create_inet_dgram_socket", drb_ffi_create_inet_dgram_socket_Binding, MRB_ARGS_REQ(2));
-    drb_api->mrb_define_module_function(state, module, "sendto_inet_dgram_socket", drb_ffi_sendto_inet_dgram_socket_Binding, MRB_ARGS_REQ(6));
-    drb_api->mrb_define_module_function(state, module, "recvfrom_inet_dgram_socket", drb_ffi_recvfrom_inet_dgram_socket_Binding, MRB_ARGS_REQ(9));
-    drb_api->mrb_define_module_function(state, module, "connect_inet_dgram_socket", drb_ffi_connect_inet_dgram_socket_Binding, MRB_ARGS_REQ(3));
-    drb_api->mrb_define_module_function(state, module, "destroy_inet_socket", drb_ffi_destroy_inet_socket_Binding, MRB_ARGS_REQ(1));
-    drb_api->mrb_define_module_function(state, module, "shutdown_inet_stream_socket", drb_ffi_shutdown_inet_stream_socket_Binding, MRB_ARGS_REQ(2));
-    drb_api->mrb_define_module_function(state, module, "create_inet_server_socket", drb_ffi_create_inet_server_socket_Binding, MRB_ARGS_REQ(5));
-    drb_api->mrb_define_module_function(state, module, "accept_inet_stream_socket", drb_ffi_accept_inet_stream_socket_Binding, MRB_ARGS_REQ(7));
+    drb_api->mrb_define_module_function(state, module, "create_stream_socket", drb_ffi_create_stream_socket_Binding, MRB_ARGS_REQ(4));
+    drb_api->mrb_define_module_function(state, module, "create_dgram_socket", drb_ffi_create_dgram_socket_Binding, MRB_ARGS_REQ(2));
+    drb_api->mrb_define_module_function(state, module, "sendto_dgram_socket", drb_ffi_sendto_dgram_socket_Binding, MRB_ARGS_REQ(6));
+    drb_api->mrb_define_module_function(state, module, "recvfrom_dgram_socket", drb_ffi_recvfrom_dgram_socket_Binding, MRB_ARGS_REQ(9));
+    drb_api->mrb_define_module_function(state, module, "connect_dgram_socket", drb_ffi_connect_dgram_socket_Binding, MRB_ARGS_REQ(3));
+    drb_api->mrb_define_module_function(state, module, "destroy_socket", drb_ffi_destroy_socket_Binding, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_module_function(state, module, "shutdown_stream_socket", drb_ffi_shutdown_stream_socket_Binding, MRB_ARGS_REQ(2));
+    drb_api->mrb_define_module_function(state, module, "create_server_socket", drb_ffi_create_server_socket_Binding, MRB_ARGS_REQ(5));
+    drb_api->mrb_define_module_function(state, module, "accept_stream_socket", drb_ffi_accept_stream_socket_Binding, MRB_ARGS_REQ(7));
     drb_api->mrb_define_module_function(state, module, "get_address_family", drb_ffi_get_address_family_Binding, MRB_ARGS_REQ(1));
 #ifdef linux
     drb_api->mrb_define_module_function(state, module, "create_multicast_socket", drb_ffi_create_multicast_socket_Binding, MRB_ARGS_REQ(3));

@@ -1,19 +1,22 @@
 /**
- * @file    libinetsocket.c
+ * @file    libsocket.c
  *
- * @brief Contains all C libinetsocket functions.
+ * @brief Contains all C libsocket functions.
  *
- * This is the main file for libinetsocket. It contains all functions
- * used to work with INET and INET6 sockets, both TCP and UDP.
- */
-/**
- * @addtogroup libinetsocket
- * @{
+ * This is the main file for the DragonRuby port of libinetsocket. 
+ * It contains all functions used to work with INET and INET6 sockets, 
+ * both TCP and UDP.
  */
 
 /*
    The committers of the libsocket project, all rights reserved
    (c) 2012, dermesser <lbo@spheniscida.de>
+
+   DragonRuby is a registered trademark of DragonRuby LLP 
+   (c) 2012, amirrajan <amir.rajan@dragonruby.org>
+
+   The bindings below fall under the same license as libinetsocket
+   (c) 2023, bedwardly-down <social@brandongrows.me>
 
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions are met:
@@ -165,7 +168,7 @@ static inline signed int check_error(int return_value) {
  *
  * @return A valid socket file descriptor.
  */
-int create_inet_stream_socket(const char *host, const char *service,
+int create_stream_socket(const char *host, const char *service,
                               char proto_osi3, int flags) {
 #ifdef _WIN32
     WSADATA d;
@@ -242,7 +245,7 @@ int create_inet_stream_socket(const char *host, const char *service,
     {
 #ifdef VERBOSE
         debug_write(
-            "create_inet_stream_socket: Could not connect to any address!\n");
+            "create_stream_socket: Could not connect to any address!\n");
 #endif
         int errno_saved = errno;
         close(sfd);
@@ -271,9 +274,9 @@ int create_inet_stream_socket(const char *host, const char *service,
  * @return The socket file descriptor number, on error -1.
  *
  * To send and receive data with this socket use the functions explained below,
- * sendto_inet_dgram_socket() and recvfrom_inet_dgram_socket().
+ * sendto_dgram_socket() and recvfrom_dgram_socket().
  */
-int create_inet_dgram_socket(char proto_osi3, int flags) {
+int create_dgram_socket(char proto_osi3, int flags) {
 #ifdef _WIN32
     WSADATA d;
     if (WSAStartup(MAKEWORD(2, 2), &d)) {
@@ -286,7 +289,7 @@ int create_inet_dgram_socket(char proto_osi3, int flags) {
     if (proto_osi3 != LIBSOCKET_IPv4 && proto_osi3 != LIBSOCKET_IPv6) {
 #ifdef VERBOSE
         debug_write(
-            "create_inet_dgram_socket: osi3 argument invalid for DGRAM "
+            "create_dgram_socket: osi3 argument invalid for DGRAM "
             "sockets\n");
 #endif
         return -1;
@@ -313,7 +316,7 @@ int create_inet_dgram_socket(char proto_osi3, int flags) {
  *
  * @param sfd is the *Socket File Descriptor* (every socket file descriptor
  * argument in libsocket is called sfd) which you got from
- * create_inet_dgram_socket(). *The usage with STREAM sockets is not recommended
+ * create_dgram_socket(). *The usage with STREAM sockets is not recommended
  * and the result is undefined!*
  * @param buf is a pointer to some data.
  * @param size is the length of the buffer to which buf points.
@@ -333,7 +336,7 @@ int create_inet_dgram_socket(char proto_osi3, int flags) {
  * @retval n *n* bytes of data could be sent.
  * @retval -1 Error.
  */
-ssize_t sendto_inet_dgram_socket(int sfd, const void *buf, size_t size,
+ssize_t sendto_dgram_socket(int sfd, const void *buf, size_t size,
                                  const char *host, const char *service,
                                  int sendto_flags) {
     struct sockaddr_storage oldsock;
@@ -415,7 +418,7 @@ ssize_t sendto_inet_dgram_socket(int sfd, const void *buf, size_t size,
  * @retval 0 Peer sent EOF.
  * @retval <0 An error occurred.
  */
-ssize_t recvfrom_inet_dgram_socket(int sfd, void *buffer, size_t size,
+ssize_t recvfrom_dgram_socket(int sfd, void *buffer, size_t size,
                                    char *src_host, size_t src_host_len,
                                    char *src_service, size_t src_service_len,
                                    int recvfrom_flags, int numeric) {
@@ -502,7 +505,7 @@ ssize_t recvfrom_inet_dgram_socket(int sfd, void *buffer, size_t size,
             sport = ntohs(((struct sockaddr_in6 *)&client)->sin6_port);
         } else {
 #ifdef VERBOSE
-            debug_write("recvfrom_inet_dgram_socket: Unknown address family");
+            debug_write("recvfrom_dgram_socket: Unknown address family");
 #endif
         }
 
@@ -534,7 +537,7 @@ ssize_t recvfrom_inet_dgram_socket(int sfd, void *buffer, size_t size,
  * @retval 0 Success
  * @retval -1 Error.
  */
-int connect_inet_dgram_socket(int sfd, const char *host, const char *service) {
+int connect_dgram_socket(int sfd, const char *host, const char *service) {
     struct addrinfo *result, *result_check, hint;
     struct sockaddr_storage oldsockaddr;
     socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
@@ -607,7 +610,7 @@ int connect_inet_dgram_socket(int sfd, const char *host, const char *service) {
     {
 #ifdef VERBOSE
         debug_write(
-            "connect_inet_dgram_socket: Could not connect to any address!\n");
+            "connect_dgram_socket: Could not connect to any address!\n");
 #endif
         freeaddrinfo(result);
         return -1;
@@ -629,7 +632,7 @@ int connect_inet_dgram_socket(int sfd, const char *host, const char *service) {
  * @retval -1 Socket was already closed (other errors are very unlikely to
  * occur)
  */
-int destroy_inet_socket(int sfd) {
+int destroy_socket(int sfd) {
     if (sfd < 0) return -1;
 
     if (-1 == check_error(close(sfd))) return -1;
@@ -653,7 +656,7 @@ int destroy_inet_socket(int sfd) {
  * @retval -1 Something went wrong, e.g. the socket was closed, the file
  * descriptor is invalid etc.
  */
-int shutdown_inet_stream_socket(int sfd, int method) {
+int shutdown_stream_socket(int sfd, int method) {
     if (sfd < 0) return -1;
 
     if ((method != LIBSOCKET_READ) && (method != LIBSOCKET_WRITE) &&
@@ -699,12 +702,12 @@ int shutdown_inet_stream_socket(int sfd, int method) {
  * `socket(2)`; everything other than 0 does not make sense on other OSes than
  * Linux.
  *
- * @retval >0 A working passive socket. Call `accept_inet_stream_socket()` next.
+ * @retval >0 A working passive socket. Call `accept_stream_socket()` next.
  * @retval <0 Something went wrong; for example, the addresses where garbage or
  * the port was not free.
  */
 //		              Bind address	   Port TCP/UDP IPv4/6
-int create_inet_server_socket(const char *bind_addr, const char *bind_port,
+int create_server_socket(const char *bind_addr, const char *bind_port,
                               char proto_osi4, char proto_osi3, int flags) {
     int sfd, domain, type, retval;
     struct addrinfo *result, *result_check, hints;
@@ -788,7 +791,7 @@ int create_inet_server_socket(const char *bind_addr, const char *bind_port,
     if (result_check == NULL) {
 #ifdef VERBOSE
         debug_write(
-            "create_inet_server_socket: Could not bind to any address!\n");
+            "create_server_socket: Could not bind to any address!\n");
 #endif
         freeaddrinfo(result);
         return -1;
@@ -825,7 +828,7 @@ int create_inet_server_socket(const char *bind_addr, const char *bind_port,
  */
 //	 		       Socket    Src string      Src str len Src service
 // Src service len         NUMERIC?
-int accept_inet_stream_socket(int sfd, char *src_host, size_t src_host_len,
+int accept_stream_socket(int sfd, char *src_host, size_t src_host_len,
                               char *src_service, size_t src_service_len,
                               int flags, int accept_flags) {
     struct sockaddr_storage client_info;
@@ -908,7 +911,7 @@ int accept_inet_stream_socket(int sfd, char *src_host, size_t src_host_len,
             sport = ntohs(((struct sockaddr_in6 *)&client_info)->sin6_port);
         } else {
 #ifdef VERBOSE
-            debug_write("accept_inet_stream_socket: Unknown address family");
+            debug_write("accept_stream_socket: Unknown address family");
 #endif
             return -1;
         }
@@ -992,7 +995,7 @@ int get_address_family(const char *hostname) {
  *
  * The group address and port is also used as arguments to `bind(2)`. After
  * creating this socket, you may use the usual I/O functions on it, i.e.
- * sendto_inet_dgram_socket and recvfrom_inet_dgram_socket.
+ * sendto_dgram_socket and recvfrom_dgram_socket.
  *
  * @param group Group address. This address is also used to bind the socket
  * @param port Multicast port.
@@ -1021,7 +1024,7 @@ int create_multicast_socket(const char *group, const char *port,
     memset(&hints, 0, sizeof(hints));
     memset(&interface, 0, sizeof(interface));
 
-    if (-1 == check_error(sfd = create_inet_server_socket(
+    if (-1 == check_error(sfd = create_server_socket(
                               group, port, LIBSOCKET_UDP, LIBSOCKET_BOTH, 0))) {
         return -1;
     }
