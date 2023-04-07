@@ -1,8 +1,8 @@
-#		@file    require.rb
+#		@file    socket.rb
 
-#		@brief all required ruby files for libsocket.
+#		@brief Main DragonRuby entry point for libsocket.
 
-#   Place this at the top of main.rb as require 'libsocket/require.rb'.
+#		This file is what game developers will directly interact with when using libsocket.
 
 #		The committers of the libsocket project, all rights reserved
 #		(c) 2012 and following, dermesser <lbo@spheniscida.de>
@@ -33,6 +33,27 @@
 #		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #		SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'libsocket/defines.rb'
-require 'libsocket/error.rb'
-require 'libsocket/socket.rb'
+$gtk.ffi_misc.gtk_dlopen("libsocket")
+include FFI::SOCKET
+
+class Socket
+  include Error
+  include Defines
+
+  attr_accessor :connected
+
+  def initialize
+    self.connected ||= false
+  end
+
+  def create_tcp_socket host, port, flags
+    create_stream_socket(host, port, 5, flags) if @connected == false
+    @connected = true
+  end
+
+  def check_connection_result result
+    Error.check_error result
+  end
+
+  private :check_connection_result
+end
