@@ -1,8 +1,8 @@
-#		@file    defines.rb
+#		@file    require.rb
 
-#		@brief Definitions module for libsocket.
+#		@brief all required ruby files for libsocket.
 
-#		This file was created to allow for common definitions to be used.
+#   Place this at the top of main.rb as require 'libsocket/require.rb'.
 
 #		The committers of the libsocket project, all rights reserved
 #		(c) 2012 and following, dermesser <lbo@spheniscida.de>
@@ -33,54 +33,5 @@
 #		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #		SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-module Defines
-  LIBSOCKET_VERSION = "2.4"
-
-  # Macros for determining protocol type
-  LIBSOCKET_TCP = 1
-  LIBSOCKET_UDP = 2
-
-  # Port of common error codes
-  # Windows (ref: https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2)
-  WSAEINTR = 10004
-  WSAEACCES = 10013
-  WSAEFAULT = 10014
-  WSAEINVAL = 10022
-  WSAEINPROGRESS = 10036
-  WSAEALREADY = 10037
-  WSAENOTSOCK = 10038
-  WSAENETDOWN = 10050
-  WSAENETUNREACH = 10051
-  WSAECONNABORTED = 10053
-  WSAECONNRESET = 10054
-  WSAEISCONN = 10056
-  WSAENOTCONN = 10057
-  WSAESHUTDOWN = 10058
-  WSAETIMEDOUT = 10060
-  WSAECONNREFUSED = 10061
-  WSAEHOSTDOWN = 10064
-  WSAEHOSTUNREACH = 10065
-  WSAHOST_NOT_FOUND = 11001
-  WSA_IO_INCOMPLETE = 996
-
-  # Linux (ref https://www.man7.org/linux/man-pages/man3/errno.3.html)
-  EACCES = 13
-  EINVAL = 22
-  EADDRNOTAVAIL = 99
-  ECONNABORTED = 103
-  ECONNREFUSED = 111
-  ECONNRESET = 104
-  EHOSTDOWN = 112
-  EHOSTUNREACH = 113
-  EINPROGRESS = 115
-  EINTR = 4
-  EIO = 5
-  EISCONN = 106
-  ENETRESET = 102
-  ENETUNREACH = 101
-  ENOPROTOOPT = 92
-  ENOTCONN = 107
-  EOPNOTSUPP = 95
-  ETIMEDOUT = 110
-  EPROTOTYPE = 91
-end
+require 'libsocket/defines.rb'
+require 'libsocket/error.rb'
