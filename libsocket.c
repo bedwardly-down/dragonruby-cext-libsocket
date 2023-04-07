@@ -981,6 +981,26 @@ int get_address_family(const char *hostname) {
 }
 
 /**
+ * @brief a wrapper function to help DragonRuby obtain error codes when working with sockets.
+ *
+ * This function simply grabs the system error code and then passes it to DragonRuby so that 
+ * error.rb can process it.
+ *
+ * @retval system error code
+ *
+ */
+
+int get_error_code() {
+  int ret = 0;
+#if defined(_WIN32)
+    ret = WSAGetLastError();
+#elif defined(linux)
+    ret = errno;
+#endif
+  return ret;
+}
+
+/**
  * @brief Create a datagram socket and join to the multicast group `address`.
  *
  * This function creates a multicast socket bound to `address`. The only option

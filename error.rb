@@ -198,6 +198,12 @@ class Error
     ]
   end
 
+  def check_error code
+    @errors.map do |i|
+      puts i.msg if i.code == code
+    end
+  end
+
   def tick
     defaults
   end
