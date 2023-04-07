@@ -29,7 +29,7 @@ On Linux:
 ```
 clang -shared \
   -isystem include -I . -fPIC \
-  -o mygame/native/linux-amd64/libsocket.so mygame/libsocket/libsocket.c
+  -o mygame/native/linux-amd64/libsocket.so mygame/libsocket/libsocket-bind.c
 ```
 
 3) Add to the top of your `mygame/app/main.rb`:
