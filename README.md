@@ -35,6 +35,7 @@ clang -shared \
 3) Add to the top of your `mygame/app/main.rb`:
 
 ```
+require 'libsocket/require.rb'
 $gtk.ffi_misc.gtk_dlopen("libsocket")
 include FFI::SOCKET
 ```
@@ -43,4 +44,4 @@ That should be it. All functions are documented pretty heavily in the libsocket.
 
 ## TODO
 
-* Add Mac OSX, iOS, and Android support
+* Add Mac OSX, iOS, and Android support. Console support needs official development kits and will probably require you to roll your own code.
