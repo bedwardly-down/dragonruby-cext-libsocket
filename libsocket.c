@@ -129,6 +129,8 @@
 #define _TRADITIONAL_RDNS
 #endif
 
+static int connection_result = 0;
+
 static inline signed int check_error(int return_value) {
 #ifdef VERBOSE
     const char *errbuf;
@@ -226,9 +228,9 @@ int create_stream_socket(const char *host, const char *service,
         if (sfd < 0)  // Error!!!
             continue;
 
-        int CON_RES = connect(sfd, result_check->ai_addr,
+        connection_result = connect(sfd, result_check->ai_addr,
                               result_check->ai_addrlen);
-        if ((CON_RES != -1) || (CON_RES == -1 && 
+        if ((connection_result != -1) || (connection_result == -1 && 
 #if defined(_WIN32)
             ((WSAGetLastError() == WSAEINPROGRESS) || (WSAGetLastError() == WSAEPROVIDERFAILEDINIT) || (WSAGetLastError() == WSAENETDOWN ))))
 #elif defined(linux)
@@ -978,6 +980,20 @@ int get_address_family(const char *hostname) {
     }
 
     return af;
+}
+
+/**
+ * @brief a wrapper function to help DragonRuby obtain the connect() result.
+ *
+ * This function simply grabs the connect() result and then passes it to DragonRuby so that 
+ * socket.rb can process it.
+ *
+ * @retval connect() result
+ *
+ */
+
+int get_connection_result() {
+  return connection_result;
 }
 
 /**

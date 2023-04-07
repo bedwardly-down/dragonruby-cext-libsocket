@@ -179,16 +179,6 @@ static mrb_value drb_ffi__ZTSPc_SetAt(mrb_state *mrb, mrb_value self) {
 static mrb_value drb_ffi__ZTSPc_GetString(mrb_state *state, mrb_value self) {
     return drb_api->mrb_str_new_cstr(state, drb_ffi__ZTSPc_FromRuby(state, self));
 }
-static mrb_value drb_ffi_check_error_Binding(mrb_state *state, mrb_value value) {
-    mrb_value *args = 0;
-    mrb_int argc = 0;
-    drb_api->mrb_get_args(state, "*", &args, &argc);
-    if (argc != 1)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'check_error': wrong number of arguments (%d for 1)", argc);
-    int return_value_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
-    int ret_val = check_error(return_value_0);
-    return drb_ffi__ZTSi_ToRuby(state, ret_val);
-}
 static mrb_value drb_ffi_create_stream_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
@@ -319,6 +309,15 @@ static mrb_value drb_ffi_get_address_family_Binding(mrb_state *state, mrb_value 
     int ret_val = get_address_family(hostname_0);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
+static mrb_value drb_ffi_get_connection_result_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 0)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'get_connection_result': wrong number of arguments (%d for 0)", argc);
+    int ret_val = get_connection_result();
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
 static mrb_value drb_ffi_get_error_code_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
@@ -348,7 +347,6 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     struct RClass *FFI = drb_api->mrb_module_get(state, "FFI");
     struct RClass *module = drb_api->mrb_define_module_under(state, FFI, "SOCKET");
     struct RClass *object_class = state->object_class;
-    drb_api->mrb_define_module_function(state, module, "check_error", drb_ffi_check_error_Binding, MRB_ARGS_REQ(1));
     drb_api->mrb_define_module_function(state, module, "create_stream_socket", drb_ffi_create_stream_socket_Binding, MRB_ARGS_REQ(4));
     drb_api->mrb_define_module_function(state, module, "create_dgram_socket", drb_ffi_create_dgram_socket_Binding, MRB_ARGS_REQ(2));
     drb_api->mrb_define_module_function(state, module, "sendto_dgram_socket", drb_ffi_sendto_dgram_socket_Binding, MRB_ARGS_REQ(6));
@@ -359,6 +357,7 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_module_function(state, module, "create_server_socket", drb_ffi_create_server_socket_Binding, MRB_ARGS_REQ(5));
     drb_api->mrb_define_module_function(state, module, "accept_stream_socket", drb_ffi_accept_stream_socket_Binding, MRB_ARGS_REQ(7));
     drb_api->mrb_define_module_function(state, module, "get_address_family", drb_ffi_get_address_family_Binding, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_module_function(state, module, "get_connection_result", drb_ffi_get_connection_result_Binding, MRB_ARGS_REQ(0));
     drb_api->mrb_define_module_function(state, module, "get_error_code", drb_ffi_get_error_code_Binding, MRB_ARGS_REQ(0));
 #ifdef linux
     drb_api->mrb_define_module_function(state, module, "create_multicast_socket", drb_ffi_create_multicast_socket_Binding, MRB_ARGS_REQ(3));
