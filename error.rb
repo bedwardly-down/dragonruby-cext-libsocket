@@ -33,12 +33,11 @@
 #		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #		SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-class Error
+module Error
   include Defines
-  attr_accessor :errors
 
-  def defaults
-    self.errors = [
+  class << self
+    ERRORS = [
       {
         code: Defines::WSAEINTR,
         msg: "Connection interrupted by local system. DragonRuby will probably crash on you."
@@ -196,15 +195,11 @@ class Error
         msg: "Socket type incompatible with function. Check that you're passing the correct one and try again."
       }
     ]
-  end
 
-  def check_error code
-    @errors.map do |i|
-      puts i.msg if i.code == code
+    def check_error code
+      ERRORS.map do |i|
+        puts i.msg if i.code == code
+      end
     end
-  end
-
-  def tick
-    defaults
   end
 end
