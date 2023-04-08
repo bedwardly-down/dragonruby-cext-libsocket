@@ -66,6 +66,8 @@ module Defines
   WSAEHOSTUNREACH = 10065
   WSAHOST_NOT_FOUND = 11001
   WSA_IO_INCOMPLETE = 996
+  WSAEBADF = 10009
+  WSAEPROTOTYPE = 10041
 
   # Linux (ref https://www.man7.org/linux/man-pages/man3/errno.3.html)
   EACCES = 13
@@ -87,4 +89,5 @@ module Defines
   EOPNOTSUPP = 95
   ETIMEDOUT = 110
   EPROTOTYPE = 91
+  EBADF = 9
 end

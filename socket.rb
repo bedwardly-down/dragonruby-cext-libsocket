@@ -43,24 +43,42 @@ class Socket
   attr_accessor :connected, :shutdown, :sfd
 
   def initialize
-    self.connected ||= false
-    self.shutdown ||= false
+    self.connected ||= {
+      tcp: false,
+      udp: false
+    }
+    self.shutdown ||= {
+      tcp: false,
+      udp: false
+    }
     self.sfd ||= 0
   end
 
   def create_tcp_socket host, port, flags
-    if @connected == false
+    if @connected.tcp == false && @sfd != -1
       @sfd = create_stream_socket(host, port, 5, flags)
       check_tcp_connection_result sfd, get_connection_result
-      @connected = true
+
+      # checking if socket started
+      if sfd == -1
+        Error.check_error get_error_code
+      else
+        @connected.tcp = true
+      end
+
+      @shutdown.tcp = false if @shutdown.tcp == true
     end
   end
 
   def close_tcp_socket
-    if @shutdown == false
+    if @shutdown.tcp == false && @connected.true
       write = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_WRITE)
       read = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_READ)
-      @shutdown = true if write + read == 0 # both equalling 0 means shutdown complete
+
+      if write + read == 0 # both equalling 0 means shutdown complete
+        @shutdown.tcp = true
+        @connected.tcp = false
+      end
     end
   end
 

@@ -119,6 +119,10 @@ module Error
         msg: "Socket can't find the host. Check your configuration and try again."
       },
       {
+        code: Defines::WSAEPROTOTYPE,
+        msg: "Socket type incompatible with function. Check that you're passing the correct socket and try again."
+      },
+      {
         code: Defines::EACCES,
         msg: "Permission denied on socket by host."
       },
@@ -192,13 +196,17 @@ module Error
       },
       {
         code: Defines::EPROTOTYPE,
-        msg: "Socket type incompatible with function. Check that you're passing the correct one and try again."
+        msg: "Socket type incompatible with function. Check that you're passing the correct socket and try again."
+      },
+      {
+        code: Defines::EBADF,
+        msg: "Host currently unavailable; it's probably offline. Try again later."
       }
     ]
 
     def check_error code
-      ERRORS.map do |i|
-        return i.code == code
+      ERRORS.each do |i|
+        puts i.msg if i.code == code
       end
     end
   end
