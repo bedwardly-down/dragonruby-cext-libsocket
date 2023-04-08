@@ -40,17 +40,27 @@ class Socket
   include Error
   include Defines
 
-  attr_accessor :connected
+  attr_accessor :connected, :shutdown, :sfd
 
   def initialize
     self.connected ||= false
+    self.shutdown ||= false
+    self.sfd ||= 0
   end
 
   def create_tcp_socket host, port, flags
     if @connected == false
-      sfd = create_stream_socket(host, port, 5, flags)
+      @sfd = create_stream_socket(host, port, 5, flags)
       check_tcp_connection_result sfd, get_connection_result
       @connected = true
+    end
+  end
+
+  def close_tcp_socket
+    if @shutdown == false
+      write = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_WRITE)
+      read = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_READ)
+      @shutdown = true if write + read == 0 # both equalling 0 means shutdown complete
     end
   end
 

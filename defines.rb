@@ -40,6 +40,10 @@ module Defines
   LIBSOCKET_TCP = 1
   LIBSOCKET_UDP = 2
 
+  # Read / Write flag for shutdown
+  LIBSOCKET_READ = 1
+  LIBSOCKET_WRITE = 2
+
   # Port of common error codes
   # Windows (ref: https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2)
   WSAEINTR = 10004
