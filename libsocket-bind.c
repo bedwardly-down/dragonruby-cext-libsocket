@@ -54,7 +54,7 @@
 #define _WINSOCKAPI_
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#elif defined(linux)
+#elif defined(linux) || defined(__APPLE__)
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netdb.h>       // getaddrinfo()

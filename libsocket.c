@@ -879,9 +879,6 @@ int accept_stream_socket(int sfd, char *src_host, size_t src_host_len,
             in_addrlen = sizeof(struct in6_addr);
             sport = ntohs(((struct sockaddr_in6 *)&client_info)->sin6_port);
         } else {
-#ifdef VERBOSE
-            debug_write("accept_stream_socket: Unknown address family");
-#endif
             return -1;
         }
 
@@ -929,10 +926,6 @@ int get_address_family(const char *hostname) {
     hint.ai_family = AF_UNSPEC;
 
     if (0 != (return_value = getaddrinfo(hostname, "0", &hint, &result))) {
-#ifdef VERBOSE
-        errstring = gai_strerror(return_value);
-        debug_write(errstring);
-#endif
         return -1;
     }
 
