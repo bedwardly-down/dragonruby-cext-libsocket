@@ -61,7 +61,7 @@ class Socket
   end
 
   def create_tcp_socket
-    if @connected.tcp == false && @connected.udp == false && @sfd != -1
+    if @connected.tcp == false && @connected.udp == false && @sfd > -1
       @sfd = create_stream_socket(@options.host, @options.port, @options.protocol, @options.flags)
       check_tcp_connection get_connection_result
 
@@ -75,7 +75,7 @@ class Socket
   end
 
   def close_tcp_socket
-    if @shutdown.tcp == false && @connected.udp == false && @connected.true
+    if @shutdown.tcp == false && @connected.udp == false && @connected.tcp == true && @sfd > -1
       write = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_WRITE)
       read = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_READ)
 
@@ -91,7 +91,7 @@ class Socket
 
   def create_udp_socket
     @options.protocol = Defines::LIBSOCKET_IP4 if @options.protocol == Defines::LIBSOCKET_BOTH # libsocket UDP doesn't support using both at once
-    if @connected.udf == false && @connected.tcp == false && @sfd != -1
+    if @connected.udf == false && @connected.tcp == false && @sfd > -1
       @sfd = create_dgram_socket(@options.protocol, @option.flags)
       check_udp_connection
 
