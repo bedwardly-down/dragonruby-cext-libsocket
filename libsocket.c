@@ -129,6 +129,9 @@ static int connection_result = 0;
 static struct addrinfo *stream_result, *stream_result_check;
 static signed int sock_flags = 0;
 
+/* Forgot to define functions */
+int close_socket(int socket);
+
 static inline signed int check_error(int return_value) {
 #ifdef VERBOSE
     const char *errbuf;
@@ -179,9 +182,6 @@ int create_stream_socket(const char *host, const char *service,
 
     int sfd, return_value;
     struct addrinfo hint, *result, *result_check;
-#ifdef VERBOSE
-    const char *errstring;
-#endif
 
     if (host == NULL || service == NULL) return -1;
 
@@ -206,10 +206,6 @@ int create_stream_socket(const char *host, const char *service,
     hint.ai_socktype = SOCK_STREAM;
 
     if (0 != (return_value = getaddrinfo(host, service, &hint, &result))) {
-#ifdef VERBOSE
-        errstring = gai_strerror(return_value);
-        debug_write(errstring);
-#endif
         return -1;
     }
 
@@ -273,11 +269,6 @@ int create_dgram_socket(char proto_osi3, int flags) {
     int sfd;
 
     if (proto_osi3 != LIBSOCKET_IPv4 && proto_osi3 != LIBSOCKET_IPv6) {
-#ifdef VERBOSE
-        debug_write(
-            "create_dgram_socket: osi3 argument invalid for DGRAM "
-            "sockets\n");
-#endif
         return -1;
     }
 
@@ -291,8 +282,6 @@ int create_dgram_socket(char proto_osi3, int flags) {
         default:
             return -1;
     }
-
-    if (-1 == check_error(sfd)) return -1;
 
     return sfd;
 }
