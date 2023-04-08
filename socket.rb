@@ -40,17 +40,10 @@ class Socket
   include Error
   include Defines
 
-  attr_accessor :connected, :shutdown, :sfd, :options
+  attr_accessor :connected, :sfd, :options
 
   def initialize
-    self.connected ||= {
-      tcp: false,
-      udp: false
-    }
-    self.shutdown ||= {
-      tcp: false,
-      udp: false
-    }
+    self.connected ||= false
     self.sfd ||= 0
     self.options ||= {
       host: "127.0.0.1",
@@ -61,46 +54,45 @@ class Socket
   end
 
   def create_tcp_socket
-    if @connected.tcp == false && @connected.udp == false && @sfd > -1
+    if @connected == false && @sfd > -1
       @sfd = create_stream_socket(@options.host, @options.port, @options.protocol, @options.flags)
       check_tcp_connection get_connection_result
 
       if @sfd == -1
         Error.check_error get_error_code
+        return
       end
 
-      @connected.tcp = true
-      @shutdown.tcp = false if @shutdown.tcp == true
+      @connected = true
     end
   end
 
   def close_tcp_socket
-    if @shutdown.tcp == false && @connected.udp == false && @connected.tcp == true && @sfd > -1
+    if @connected == true
       write = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_WRITE)
       read = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_READ)
 
+      @sfd = 0
       if write + read == 0 # both equalling 0 means shutdown complete
-        @shutdown.tcp = true
-        @connected.tcp = false
+        @connected = false
       else
         Error.check_error get_error_code
       end
     end
-    @sfd = 0
   end
 
   def create_udp_socket
     @options.protocol = Defines::LIBSOCKET_IP4 if @options.protocol == Defines::LIBSOCKET_BOTH # libsocket UDP doesn't support using both at once
-    if @connected.udf == false && @connected.tcp == false && @sfd > -1
+    if @connected == false && @sfd > -1
       @sfd = create_dgram_socket(@options.protocol, @option.flags)
       check_udp_connection
 
       if @sfd == -1
         Error.check_error get_error_code
+        return
       end
 
-      @connected.udp = true
-      @shutdown.udp = false if @shutdown.udp == true
+      @connected = true
     end
   end
 
