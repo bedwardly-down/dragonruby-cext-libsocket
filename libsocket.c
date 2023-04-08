@@ -133,11 +133,9 @@ static signed int sock_flags = 0;
 int close_socket(int socket);
 
 static inline signed int check_error(int return_value) {
-#ifdef VERBOSE
-    const char *errbuf;
-#endif
-#if defined(_WIN32)
-    if (return_value == INVALID_SOCKET) {
+    if (return_value < 0) {
+
+/* Stubbed since this is all being handled directly in DragonRuby
 #ifdef VERBOSE
         FomatMessage(
           FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -151,7 +149,7 @@ static inline signed int check_error(int return_value) {
         errbuf = strerror(errno);
         debug_write(errbuf);
 #endif
-#endif
+#endif */
         return -1;
     }
 
@@ -345,10 +343,6 @@ ssize_t sendto_dgram_socket(int sfd, const void *buf, size_t size,
     hint.ai_socktype = SOCK_DGRAM;
 
     if (0 != (return_value = getaddrinfo(host, service, &hint, &result))) {
-#ifdef VERBOSE
-        errstring = gai_strerror(return_value);
-        debug_write(errstring);
-#endif
         return -1;
     }
 
