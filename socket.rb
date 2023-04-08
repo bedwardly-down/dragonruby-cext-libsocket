@@ -106,7 +106,7 @@ class Socket
       (Error.check_error Defines::EALREADY) ||
       (Error.check_error Defines::EINPROGRESS) ||
       (Error.check_error Defines::EINTR)))))
-      close_socket(@sfd)
+      destroy_socket(@sfd)
     end
   end
 

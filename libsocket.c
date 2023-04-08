@@ -130,7 +130,7 @@ static struct addrinfo *stream_result, *stream_result_check;
 static signed int sock_flags = 0;
 
 /* Forgot to define functions */
-int close_socket(int socket);
+static int close_socket(int socket);
 
 static inline signed int check_error(int return_value) {
     if (return_value < 0) {
@@ -604,7 +604,7 @@ int connect_dgram_socket(int sfd, const char *host, const char *service) {
 int destroy_socket(int sfd) {
     if (sfd < 0) return -1;
 
-    if (-1 == check_error(close(sfd))) return -1;
+    if (-1 == check_error(close_socket(sfd))) return -1;
 
     return 0;
 }
@@ -744,7 +744,7 @@ int create_server_socket(const char *bind_addr, const char *bind_port,
 
         if (retval != 0)  // Error at bind()!!!
         {
-            close(sfd);
+            close_socket(sfd);
             continue;
         }
 
@@ -754,7 +754,7 @@ int create_server_socket(const char *bind_addr, const char *bind_port,
                           // anywhere. It is safe to cancel the loop here
             break;
         else
-            close(sfd);
+            close_socket(sfd);
     }
 
     if (result_check == NULL) {
@@ -986,11 +986,11 @@ int get_error_code() {
 /**
  * @brief a wrapper function to help DragonRuby close a socket.
  *
- * This function simply closes the socket when called by socket.rb.
+ * This function simply closes the socket when called in code here or through destroy_socket.
  *
  */
 
-int close_socket(int socket) {
+static inline int close_socket(int socket) {
 #if defined(_WIN32)
   closesocket(socket);
 #elif defined(linux)
@@ -1060,7 +1060,7 @@ int create_multicast_socket(const char *group, const char *port,
         const char *errstring = gai_strerror(return_value);
         debug_write(errstring);
 #endif
-        close(sfd);
+        close_socket(sfd);
         freeaddrinfo(result);
         errno = errno_saved;
 
@@ -1081,7 +1081,7 @@ int create_multicast_socket(const char *group, const char *port,
 
             if (-1 == check_error(ioctl(sfd, SIOCGIFINDEX, &interface))) {
                 int errno_saved = errno;
-                close(sfd);
+                close_socket(sfd);
                 freeaddrinfo(result);
                 errno = errno_saved;
                 return -1;
@@ -1093,7 +1093,7 @@ int create_multicast_socket(const char *group, const char *port,
         if (-1 == check_error(setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                                          &mreq4, sizeof(struct ip_mreqn)))) {
             int errno_saved = errno;
-            close(sfd);
+            close_socket(sfd);
             freeaddrinfo(result);
             errno = errno_saved;
             return -1;
@@ -1101,7 +1101,7 @@ int create_multicast_socket(const char *group, const char *port,
         if (-1 == check_error(setsockopt(sfd, IPPROTO_IP, IP_MULTICAST_IF,
                                          &mreq4, sizeof(struct ip_mreqn)))) {
             int errno_saved = errno;
-            close(sfd);
+            close_socket(sfd);
             freeaddrinfo(result);
             errno = errno_saved;
             return -1;
@@ -1122,7 +1122,7 @@ int create_multicast_socket(const char *group, const char *port,
 
             if (-1 == check_error(ioctl(sfd, SIOCGIFINDEX, &interface))) {
                 int errno_saved = errno;
-                close(sfd);
+                close_socket(sfd);
                 freeaddrinfo(result);
                 errno = errno_saved;
                 return -1;
@@ -1134,7 +1134,7 @@ int create_multicast_socket(const char *group, const char *port,
         if (-1 == check_error(setsockopt(sfd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP,
                                          &mreq6, sizeof(struct ipv6_mreq)))) {
             int errno_saved = errno;
-            close(sfd);
+            close_socket(sfd);
             freeaddrinfo(result);
             errno = errno_saved;
             return -1;
@@ -1143,7 +1143,7 @@ int create_multicast_socket(const char *group, const char *port,
                                          &mreq6.ipv6mr_interface,
                                          sizeof(mreq6.ipv6mr_interface)))) {
             int errno_saved = errno;
-            close(sfd);
+            close_socket(sfd);
             freeaddrinfo(result);
             errno = errno_saved;
             return -1;

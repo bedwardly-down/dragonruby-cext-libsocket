@@ -86,7 +86,6 @@ extern int accept_stream_socket(int sfd, char* src_host,
 extern int get_address_family(const char* hostname);
 extern int get_connection_result();
 extern int get_error_code();
-extern int close_socket(int socket);
 
 #ifdef linux
 extern int create_multicast_socket(const char* group, const char* port,
