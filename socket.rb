@@ -40,16 +40,20 @@ class Socket
   include Error
   include Defines
 
-  attr_accessor :connected, :sfd, :options
+  attr_accessor :connected, :sfd, :client, :options
 
   def initialize
     self.connected ||= false
     self.sfd ||= 0
+    self.client ||= 0
     self.options ||= {
       host: "127.0.0.1",
+      host_len: 100,
       port: "8000",
+      port_len: 100, # This one is weird; it's supposed to the the port buffer size?
       protocol: Defines::LIBSOCKET_BOTH,
-      flags: 0
+      flags: 0,
+      accept_flags: 0
     }
   end
 
@@ -58,7 +62,20 @@ class Socket
       @sfd = create_stream_socket(@options.host, @options.port, @options.protocol, @options.flags)
       check_tcp_connection get_connection_result
 
-      if @sfd == -1
+      if @sfd < 0
+        Error.check_error get_error_code
+        return
+      end
+
+      @connected = true
+    end
+  end
+
+  def accept_tcp_connection
+    if @connected == false && @client > -1
+      @client = accept_stream_socket(@sfd, @options.host, @options.host_len, @options.port, @options.port_len, @options.flags, @options.accept_flags)
+
+      if @client < 0
         Error.check_error get_error_code
         return
       end
@@ -87,7 +104,7 @@ class Socket
       @sfd = create_dgram_socket(@options.protocol, @option.flags)
       check_udp_connection
 
-      if @sfd == -1
+      if @sfd < 0
         Error.check_error get_error_code
         return
       end
@@ -111,6 +128,12 @@ class Socket
   end
 
   def check_udp_connection
+  end
+
+  def sendto_udp_socket
+  end
+
+  def recvfrom_udp_socket
   end
 
   private :check_tcp_connection, :check_udp_connection
