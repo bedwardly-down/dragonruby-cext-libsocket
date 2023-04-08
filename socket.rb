@@ -113,5 +113,5 @@ class Socket
   def check_udp_connection
   end
 
-  private :check_connection, :check_udp_connection
+  private :check_tcp_connection, :check_udp_connection
 end
