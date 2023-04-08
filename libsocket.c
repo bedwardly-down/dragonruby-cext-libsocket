@@ -126,6 +126,7 @@
 
 /* custom private variables to help connect to DragonRuby */
 static int connection_result = 0;
+static struct addrinfo *stream_result, *stream_result_check;
 static signed int sock_flags = 0;
 
 static inline signed int check_error(int return_value) {
@@ -223,38 +224,24 @@ int create_stream_socket(const char *host, const char *service,
                      result_check->ai_protocol);
 
         if (sfd < 0)  // Error!!!
-            continue;
+          continue;
 
         connection_result = connect(sfd, result_check->ai_addr,
                               result_check->ai_addrlen);
-        if ((connection_result != -1) || (connection_result == -1 && 
-#if defined(_WIN32)
-            ((WSAGetLastError() == WSAEINPROGRESS) || (WSAGetLastError() == WSAEPROVIDERFAILEDINIT) || (WSAGetLastError() == WSAENETDOWN ))))
-#elif defined(linux)
-            (flags |= SOCK_NONBLOCK) && ((errno == EINPROGRESS) || (errno == EALREADY) || (errno == EINTR))))     // connected without error, or, connected with errno being one of these important states
-#endif
-              break;
-       
-        close(sfd);
+        if ((connection_result != -1))
+          break;
     }
 
-    // We do now have a working socket STREAM connection to our target
-
-    if (result_check == NULL)  // Have we?
+    // Left in code for simple fact that it is useful
+    if (result_check == NULL)
     {
-#ifdef VERBOSE
-        debug_write(
-            "create_stream_socket: Could not connect to any address!\n");
-#endif
-        int errno_saved = errno;
-        close(sfd);
-        errno = errno_saved;
+        close_socket(sfd);
         freeaddrinfo(result);
         return -1;
     }
-    // Yes :)
 
-    freeaddrinfo(result);
+    stream_result = result;
+    stream_result_check = result_check;
 
     return sfd;
 }
@@ -1022,9 +1009,13 @@ int get_error_code() {
 
 int close_socket(int socket) {
 #if defined(_WIN32)
+  closesocket(socket);
 #elif defined(linux)
   close(socket);
 #endif
+
+  if (stream_result_check != NULL) 
+    freeaddrinfo(stream_result);
   return 0;
 }
 

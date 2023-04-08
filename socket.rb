@@ -49,18 +49,17 @@ class Socket
   def create_tcp_socket host, port, flags
     if @connected == false
       sfd = create_stream_socket(host, port, 5, flags)
-      check_connection_result sfd, get_connection_result
+      check_tcp_connection_result sfd, get_connection_result
       @connected = true
     end
   end
 
-  def check_connection_result sfd, result
-    if ((result != -1) || 
+  def check_tcp_connection_result sfd, result
+    if ((result != -1) ||
       (result == -1 && (
       (Error.check_error Defines::WSAEALREADY) ||
       (Error.check_error Defines::WSAEINPROGRESS) ||
-      (Error.check_error Defines::WSAEINTR) ||
-      (Error.check_error Defines::EINTR)) ||
+      (Error.check_error Defines::WSAEINTR)) ||
       (get_nonblock && (
       (Error.check_error Defines::EALREADY) ||
       (Error.check_error Defines::EINPROGRESS) ||
