@@ -643,6 +643,10 @@ int shutdown_stream_socket(int sfd, int method) {
         if (-1 == check_error(shutdown(sfd, SHUT_WR))) return -1;
     }
 
+#ifdef _WIN32
+    WSACleanup(); // required to clear up socket memory on Windows
+#endif
+
     return 0;
 }
 
