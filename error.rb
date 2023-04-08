@@ -198,7 +198,7 @@ module Error
 
     def check_error code
       ERRORS.map do |i|
-        puts i.msg if i.code == code
+        return i.code == code
       end
     end
   end

@@ -68,11 +68,6 @@
 #endif
 
 #define LIBSOCKET_VERSION 2.4
-/* #if defined BD_ANDROID
-#define LIBSOCKET_LINUX 0
-#else
-#define LIBSOCKET_LINUX 1
-#endif */
 
 /* Macro definitions */
 
@@ -129,7 +124,9 @@
 #define _TRADITIONAL_RDNS
 #endif
 
+/* custom private variables to help connect to DragonRuby */
 static int connection_result = 0;
+static signed int sock_flags = 0;
 
 static inline signed int check_error(int return_value) {
 #ifdef VERBOSE
@@ -222,7 +219,7 @@ int create_stream_socket(const char *host, const char *service,
          result_check = result_check->ai_next)  // go through the linked list of
                                                 // struct addrinfo elements
     {
-        sfd = socket(result_check->ai_family, result_check->ai_socktype | flags,
+        sfd = socket(result_check->ai_family, result_check->ai_socktype | sock_flags,
                      result_check->ai_protocol);
 
         if (sfd < 0)  // Error!!!
@@ -1017,6 +1014,21 @@ int get_error_code() {
 }
 
 /**
+ * @brief a wrapper function to help DragonRuby close a socket.
+ *
+ * This function simply closes the socket when called by socket.rb.
+ *
+ */
+
+int close_socket(int socket) {
+#if defined(_WIN32)
+#elif defined(linux)
+  close(socket);
+#endif
+  return 0;
+}
+
+/**
  * @brief Create a datagram socket and join to the multicast group `address`.
  *
  * This function creates a multicast socket bound to `address`. The only option
@@ -1167,6 +1179,21 @@ int create_multicast_socket(const char *group, const char *port,
     freeaddrinfo(result);
     return sfd;
 }
+
+/**
+ * @brief a wrapper function to help DragonRuby obtain SOCK_NONBLOCK flag for Linux.
+ *
+ * This function simply grabs the SOCK_NONBLOCK flag and then passes it to DragonRuby so that 
+ * socket.rb can process it.
+ *
+ * @retval SOCK_NONBLOCK
+ *
+ */
+
+signed int get_nonblock() {
+  return (sock_flags |= SOCK_NONBLOCK);
+}
+
 
 #endif
 

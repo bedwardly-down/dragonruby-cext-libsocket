@@ -327,6 +327,16 @@ static mrb_value drb_ffi_get_error_code_Binding(mrb_state *state, mrb_value valu
     int ret_val = get_error_code();
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
+static mrb_value drb_ffi_close_socket_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 1)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'close_socket': wrong number of arguments (%d for 1)", argc);
+    int socket_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
+    int ret_val = close_socket(socket_0);
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
 #ifdef linux
 static mrb_value drb_ffi_create_multicast_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
@@ -338,6 +348,15 @@ static mrb_value drb_ffi_create_multicast_socket_Binding(mrb_state *state, mrb_v
     char *port_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     char *if_name_2 = drb_ffi__ZTSPc_FromRuby(state, args[2]);
     int ret_val = create_multicast_socket(group_0, port_1, if_name_2);
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
+static mrb_value drb_ffi_get_nonblock_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 0)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'get_nonblock': wrong number of arguments (%d for 0)", argc);
+    signed int ret_val = get_nonblock();
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 #endif
@@ -359,8 +378,10 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_module_function(state, module, "get_address_family", drb_ffi_get_address_family_Binding, MRB_ARGS_REQ(1));
     drb_api->mrb_define_module_function(state, module, "get_connection_result", drb_ffi_get_connection_result_Binding, MRB_ARGS_REQ(0));
     drb_api->mrb_define_module_function(state, module, "get_error_code", drb_ffi_get_error_code_Binding, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_module_function(state, module, "close_socket", drb_ffi_close_socket_Binding, MRB_ARGS_REQ(1));
 #ifdef linux
     drb_api->mrb_define_module_function(state, module, "create_multicast_socket", drb_ffi_create_multicast_socket_Binding, MRB_ARGS_REQ(3));
+    drb_api->mrb_define_module_function(state, module, "get_nonblock", drb_ffi_get_connection_result_Binding, MRB_ARGS_REQ(0));
 #endif
     struct RClass *CharPointerClass = drb_api->mrb_define_class_under(state, module, "CharPointer", object_class);
     drb_api->mrb_define_class_method(state, CharPointerClass, "new", drb_ffi__ZTSPc_New, MRB_ARGS_REQ(0));

@@ -47,12 +47,26 @@ class Socket
   end
 
   def create_tcp_socket host, port, flags
-    create_stream_socket(host, port, 5, flags) if @connected == false
-    @connected = true
+    if @connected == false
+      sfd = create_stream_socket(host, port, 5, flags)
+      check_connection_result sfd, get_connection_result
+      @connected = true
+    end
   end
 
-  def check_connection_result result
-    Error.check_error result
+  def check_connection_result sfd, result
+    if ((result != -1) || 
+      (result == -1 && (
+      (Error.check_error Defines::WSAEALREADY) ||
+      (Error.check_error Defines::WSAEINPROGRESS) ||
+      (Error.check_error Defines::WSAEINTR) ||
+      (Error.check_error Defines::EINTR)) ||
+      (get_nonblock && (
+      (Error.check_error Defines::EALREADY) ||
+      (Error.check_error Defines::EINPROGRESS) ||
+      (Error.check_error Defines::EINTR)))))
+      close_socket(sfd)
+    end
   end
 
   private :check_connection_result
