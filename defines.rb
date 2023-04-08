@@ -40,6 +40,11 @@ module Defines
   LIBSOCKET_TCP = 1
   LIBSOCKET_UDP = 2
 
+  # Internet Protocols
+  LIBSOCKET_IP4 = 3
+  LIBSOCKET_IP6 = 4
+  LIBSOCKET_BOTH = 5
+
   # Read / Write flag for shutdown
   LIBSOCKET_READ = 1
   LIBSOCKET_WRITE = 2

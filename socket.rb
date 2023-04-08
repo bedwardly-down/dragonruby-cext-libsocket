@@ -40,7 +40,7 @@ class Socket
   include Error
   include Defines
 
-  attr_accessor :connected, :shutdown, :sfd
+  attr_accessor :connected, :shutdown, :sfd, :options
 
   def initialize
     self.connected ||= {
@@ -52,37 +52,59 @@ class Socket
       udp: false
     }
     self.sfd ||= 0
+    self.options ||= {
+      host: "127.0.0.1",
+      port: "8000",
+      protocol: Defines::LIBSOCKET_BOTH,
+      flags: 0
+    }
   end
 
-  def create_tcp_socket host, port, flags
-    if @connected.tcp == false && @sfd != -1
-      @sfd = create_stream_socket(host, port, 5, flags)
-      check_tcp_connection_result sfd, get_connection_result
+  def create_tcp_socket
+    if @connected.tcp == false && @connected.udp == false && @sfd != -1
+      @sfd = create_stream_socket(@options.host, @options.port, @options.protocol, @options.flags)
+      check_tcp_connection get_connection_result
 
-      # checking if socket started
-      if sfd == -1
+      if @sfd == -1
         Error.check_error get_error_code
-      else
-        @connected.tcp = true
       end
 
+      @connected.tcp = true
       @shutdown.tcp = false if @shutdown.tcp == true
     end
   end
 
   def close_tcp_socket
-    if @shutdown.tcp == false && @connected.true
+    if @shutdown.tcp == false && @connected.udp == false && @connected.true
       write = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_WRITE)
       read = shutdown_stream_socket(@sfd, Defines::LIBSOCKET_READ)
 
       if write + read == 0 # both equalling 0 means shutdown complete
         @shutdown.tcp = true
         @connected.tcp = false
+      else
+        Error.check_error get_error_code
       end
+    end
+    @sfd = 0
+  end
+
+  def create_udp_socket
+    @options.protocol = Defines::LIBSOCKET_IP4 if @options.protocol == Defines::LIBSOCKET_BOTH # libsocket UDP doesn't support using both at once
+    if @connected.udf == false && @connected.tcp == false && @sfd != -1
+      @sfd = create_dgram_socket(@options.protocol, @option.flags)
+      check_udp_connection
+
+      if @sfd == -1
+        Error.check_error get_error_code
+      end
+
+      @connected.udp = true
+      @shutdown.udp = false if @shutdown.udp == true
     end
   end
 
-  def check_tcp_connection_result sfd, result
+  def check_tcp_connection result
     if ((result != -1) ||
       (result == -1 && (
       (Error.check_error Defines::WSAEALREADY) ||
@@ -92,9 +114,12 @@ class Socket
       (Error.check_error Defines::EALREADY) ||
       (Error.check_error Defines::EINPROGRESS) ||
       (Error.check_error Defines::EINTR)))))
-      close_socket(sfd)
+      close_socket(@sfd)
     end
   end
 
-  private :check_connection_result
+  def check_udp_connection
+  end
+
+  private :check_connection, :check_udp_connection
 end
