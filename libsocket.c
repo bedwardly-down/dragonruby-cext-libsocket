@@ -100,7 +100,7 @@
  */
 #if defined(_WIN32)
 #define debug_write(str) {}
-#elif defined(linux)
+#elif defined(linux) || defined(__APPLE__)
 #define debug_write(str)                \
     {                                   \
         int verbose_errno_save = errno; \
@@ -974,7 +974,7 @@ int get_error_code() {
   int ret = 0;
 #if defined(_WIN32)
     ret = WSAGetLastError();
-#elif defined(linux)
+#elif defined(linux) || defined(__APPLE__)
     ret = errno;
 #endif
   return ret;
@@ -990,7 +990,7 @@ int get_error_code() {
 static inline int close_socket(int socket) {
 #if defined(_WIN32)
   closesocket(socket);
-#elif defined(linux)
+#elif defined(linux) || defined(__APPLE__)
   close(socket);
 #endif
 
