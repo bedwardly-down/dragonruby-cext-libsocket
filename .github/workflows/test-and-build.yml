@@ -80,6 +80,7 @@ jobs:
         run: |
           mkdir -p $TESTGAME_DIR/native/macos/
           clang -shared \
+                -arch x86_64 -arch arm64 \
                 -isystem include -I . -fPIC \
                 -o $TESTGAME_DIR/native/macos/libsocket.dylib \
                 libsocket-bind.c
