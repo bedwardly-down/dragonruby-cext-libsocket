@@ -2,7 +2,7 @@
 # require 'libsocket/require.rb'
 
 def tick(args)
-  # $gtk.ffi_misc.gtk_dlopen('libsocket')
+  $gtk.ffi_misc.gtk_dlopen('libsocket')
   if FFI.const_defined?(:SOCKET)
     $gtk.write_file('success', 'success')
   else
