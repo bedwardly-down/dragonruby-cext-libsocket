@@ -1,6 +1,70 @@
+/**
+ * 
+ * @file    libsocket-bind.c
+ *
+ * @brief   main libsocket binding source code for DragonRuby.
+ *
+ * The core goal of this library is to provide scalable and functional networking
+ * support for the DragonRuby Game Toolkit. This library is based on the C portion of
+ * libsocket found at https://github.com/dermesser/libsocket
+ * 
+ */
+
+/*
+   The committers of the libsocket project, all rights reserved
+   (c) 2012 and following, dermesser <lbo@spheniscida.de>
+ 
+   DragonRuby is a registered trademark of DragonRuby LLP 
+   (c) 2012 and following, amirrajan <amir.rajan@dragonruby.org>
+ 
+   All modifications of the original code belong to a partnership between the
+   name below and the DragonRuby game development community, all rights reserved
+   (c) 2023 and following, bedwardly-down <social@brandongrows.me>
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+   2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+   THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS “AS IS” AND ANY
+   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY
+   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+/**
+*
+* Header order is kind of important for Windows; 
+* this solves a warning caused by dragonruby.h including windows.h
+*
+* */
+#if defined(_WIN32)
+#define _WINSOCKAPI_
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#elif defined(linux) || defined(__APPLE__)
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netdb.h>       // getaddrinfo()
+#include <netinet/in.h>  // e.g. struct sockaddr_in on OpenBSD
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <unistd.h>  // read()/write()
+#endif
+
 #include <mruby.h>
 #include <string.h>
-#include <assert.h>
 #include <mruby/string.h>
 #include <mruby/data.h>
 #include <dragonruby.h>
@@ -253,14 +317,12 @@ static mrb_value drb_ffi_init_server_Binding(mrb_state *state, mrb_value value) 
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
-    if (argc != 5)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'init_server': wrong number of arguments (%d for 5)", argc);
+    if (argc != 3)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'init_server': wrong number of arguments (%d for 3)", argc);
     char *bind_addr_0 = drb_ffi__ZTSPc_FromRuby(state, args[0]);
     char *bind_port_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
-    char proto_osi4_2 = drb_ffi__ZTSc_FromRuby(state, args[2]);
-    char proto_osi3_3 = drb_ffi__ZTSc_FromRuby(state, args[3]);
-    int flags_4 = drb_ffi__ZTSi_FromRuby(state, args[4]);
-    int ret_val = init_server(bind_addr_0, bind_port_1, proto_osi4_2, proto_osi3_3, flags_4);
+    int flags_2 = drb_ffi__ZTSi_FromRuby(state, args[2]);
+    int ret_val = init_server(bind_addr_0, bind_port_1, flags_2);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 static mrb_value drb_ffi_send_to_socket_Binding(mrb_state *state, mrb_value value) {
