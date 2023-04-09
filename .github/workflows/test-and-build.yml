@@ -36,6 +36,8 @@ jobs:
         with:
           name: libsocket.so (linux-amd64)
           path: '${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so'
+      - name: Run tests
+        run: .github/workflows/run_tests.sh
   windows:
     runs-on: windows-latest
     defaults:
@@ -65,6 +67,8 @@ jobs:
         with:
           name: libsocket.dll (windows-amd64)
           path: '${{ env.TESTGAME_DIR }}/native/windows-amd64/libsocket.dll'
+      - name: Run tests
+        run: .github/workflows/run_tests.sh
   macos:
     runs-on: macos-latest
     steps:
@@ -88,3 +92,5 @@ jobs:
         with:
           name: libsocket.dylib (macos)
           path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
+      - name: Run tests
+        run: .github/workflows/run_tests.sh

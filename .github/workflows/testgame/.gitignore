@@ -1,0 +1,5 @@
+# Is copied from the root directory before running tests, so ignore to avoid duplication
+libsocket
+
+# file created when test succeeds
+success
