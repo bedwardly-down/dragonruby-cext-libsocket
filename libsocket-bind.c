@@ -179,6 +179,15 @@ static mrb_value drb_ffi__ZTSPc_SetAt(mrb_state *mrb, mrb_value self) {
 static mrb_value drb_ffi__ZTSPc_GetString(mrb_state *state, mrb_value self) {
     return drb_api->mrb_str_new_cstr(state, drb_ffi__ZTSPc_FromRuby(state, self));
 }
+static mrb_value drb_ffi_c_tick_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 0)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_tick': wrong number of arguments (%d for 0)", argc);
+    int ret_val = c_tick();
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
 static mrb_value drb_ffi_create_stream_socket_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
@@ -356,6 +365,7 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     struct RClass *FFI = drb_api->mrb_module_get(state, "FFI");
     struct RClass *module = drb_api->mrb_define_module_under(state, FFI, "SOCKET");
     struct RClass *object_class = state->object_class;
+    drb_api->mrb_define_module_function(state, module, "c_tick", drb_ffi_c_tick_Binding, MRB_ARGS_REQ(4));
     drb_api->mrb_define_module_function(state, module, "create_stream_socket", drb_ffi_create_stream_socket_Binding, MRB_ARGS_REQ(4));
     drb_api->mrb_define_module_function(state, module, "create_dgram_socket", drb_ffi_create_dgram_socket_Binding, MRB_ARGS_REQ(2));
     drb_api->mrb_define_module_function(state, module, "sendto_dgram_socket", drb_ffi_sendto_dgram_socket_Binding, MRB_ARGS_REQ(6));

@@ -132,6 +132,19 @@ static signed int sock_flags = 0;
 /* Forgot to define functions */
 static int close_socket(int socket);
 
+/**
+ * @brief the update function that DragonRuby ticks
+ *
+ * All functions that must be run every DragonRuby tick go here.
+ *
+ * @return cycle complete
+ */
+
+int c_tick() {
+  int complete = 0;
+  return complete;
+}
+
 static inline signed int check_error(int return_value) {
     if (return_value < 0) {
 

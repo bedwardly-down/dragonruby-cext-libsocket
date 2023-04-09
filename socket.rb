@@ -136,5 +136,9 @@ class Socket
   def recvfrom_udp_socket
   end
 
+  def tick
+    c_tick
+  end
+
   private :check_tcp_connection, :check_udp_connection
 end
