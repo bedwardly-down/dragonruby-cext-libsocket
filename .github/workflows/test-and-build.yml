@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches:
-      - master
-      - github-action
 
 env:
   DR_VERSION: 4.7
