@@ -42,15 +42,13 @@ jobs:
         shell: pwsh
     steps:
       - uses: actions/checkout@v3
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: install -y mingw llvm unzip curl
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
         run: |
           curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
-          unzip dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
+          move dragonruby* dragonruby.zip
+          Expand-Archive -LiteralPath .\dragonruby.zip -DestinationPath .
       - name: Build extension
         run: |
           mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
