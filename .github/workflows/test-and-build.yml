@@ -48,8 +48,8 @@ jobs:
         env:
           DR_PLATFORM: windows-amd64
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
+          unzip dragonruby-for-ci-${{ env.$DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
       - name: Build extension
         run: |
           mkdir  ${{ env.TESTGAME_DIR }}\native\windows-amd64\
