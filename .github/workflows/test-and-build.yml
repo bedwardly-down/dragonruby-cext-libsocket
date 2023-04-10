@@ -43,7 +43,14 @@ jobs:
       - uses: actions/checkout@v3
       - uses: crazy-max/ghaction-chocolatey@v2
         with:
-          args: install -y llvm unzip mingw curl windows-sdk-10.1
+          args: config set --name="cacheLocation" --value="C:\Cache"
+          args: install -y llvm unzip mingw curl visualstudio2022buildtools
+      - name: Cache Chocolatey packages
+        id: cache-choco-pkgs
+        uses: actions/cache@v3
+        with:
+          path:
+            C:\Cache
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
