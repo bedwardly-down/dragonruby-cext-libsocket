@@ -48,11 +48,7 @@ jobs:
         run: |
           curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
           move dragonruby* dragonruby.zip
-<<<<<<< HEAD
           Expand-Archive -LiteralPath .\dragonruby.zip -DestinationPath .
-=======
-          Expand-Archive -LiteralPath ..\dragonruby.zip -DestinationPath .
->>>>>>> db837c1 (Remove chocolatey process altogether)
       - name: Build extension
         run: |
           mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
