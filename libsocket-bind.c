@@ -43,13 +43,6 @@
 
 */
 
-#include <mruby.h>
-#include <string.h>
-#include <assert.h>
-#include <mruby/string.h>
-#include <mruby/data.h>
-#include <dragonruby.h>
-#include <errno.h>
 #if defined(_WIN32)
 #define _WINSOCKAPI_
 #include <winsock2.h>
@@ -62,10 +55,17 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>  // read()/write()
-#endif
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
+#endif
+#include <mruby.h>
+#include <string.h>
+#include <assert.h>
+#include <mruby/string.h>
+#include <mruby/data.h>
+#include <dragonruby.h>
+#include <errno.h>
 #include "libsocket.h"
 #include "libsocket.c"
 
