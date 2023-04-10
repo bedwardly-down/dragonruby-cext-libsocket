@@ -7,6 +7,8 @@ on:
 env:
   DR_VERSION: 4.7
   DR_LICENSE_TIER: pro
+  DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+  DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
   TESTGAME_DIR: .github/workflows/testgame
 
 jobs:
@@ -18,8 +20,8 @@ jobs:
         env:
           DR_PLATFORM: linux-amd64
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
+          unzip $DR_ZIP
           chmod u+x ./dragonruby
       - name: Build extension
         run: |
@@ -38,33 +40,34 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        shell: msys2 {0}
+        shell: pwsh
     steps:
-      - uses: actions/checkout@v2
-      - uses: msys2/setup-msys2@v2
+      - uses: actions/checkout@v3
+      - uses: crazy-max/ghaction-chocolatey@v2
         with:
-          install: mingw-w64-x86_64-clang mingw-w64-x86_64-lld unzip
+          args: install -y llvm unzip mingw curl
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
+          unzip $DR_ZIP
       - name: Build extension
         run: |
-          mkdir -p $TESTGAME_DIR/native/windows-amd64/
-          clang -shared \
-                --target=x86_64-w64-mingw32 \
-                -fuse-ld=lld \
-                -isystem include -I . -lws2_32 \
-                -o $TESTGAME_DIR/native/windows-amd64/libsocket.dll \
+          mkdir  ${{ env.TESTGAME_DIR }}\native\windows-amd64\
+          clang -shared |
+                --sysroot=C:\mingw-w64\mingw64 |
+                --target=x86_64-w64-mingw32 |
+                -fuse-ld=lld |
+                -isystem include -I . -lws2_32 |
+                -o ${{ env.TESTGAME_DIR }}\native\windows-amd64\libsocket.dll |
                 libsocket-bind.c
       - name: Run tests
-        run: .github/workflows/run_tests.sh
+        run: .github\workflows\run_tests.ps1
       - uses: actions/upload-artifact@v3
         with:
           name: libsocket.dll (windows-amd64)
-          path: '${{ env.TESTGAME_DIR }}/native/windows-amd64/libsocket.dll'
+          path: '${{ env.TESTGAME_DIR }}\native\windows-amd64\libsocket.dll'
   macos:
     runs-on: macos-latest
     steps:
@@ -73,7 +76,7 @@ jobs:
         env:
           DR_PLATFORM: macos
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
           unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           chmod u+x ./dragonruby
       - name: Build extension
