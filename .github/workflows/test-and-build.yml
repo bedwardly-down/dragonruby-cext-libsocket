@@ -9,6 +9,7 @@ env:
   DR_LICENSE_TIER: pro
   TESTGAME_DIR: .github/workflows/testgame
   TESTGAME_PWSH_DIR: .github\workflows\testgame
+  BIND_FILE: new-libsocket-bind.c
 
 jobs:
   linux:
@@ -28,7 +29,7 @@ jobs:
           clang -shared \
                 -isystem include -I . -fPIC \
                 -o $TESTGAME_DIR/native/linux-amd64/libsocket.so \
-                libsocket-bind.c
+                $BIND_FILE
       - name: Run tests
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
@@ -58,7 +59,7 @@ jobs:
                 -fuse-ld=lld `
                 -isystem include -I . -lws2_32 `
                 -o '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\libsocket.dll' `
-                libsocket-bind.c
+                '${{ env.BIND_FILE }}'
       - name: Run tests
         run: bash .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
@@ -83,7 +84,7 @@ jobs:
                 -arch x86_64 -arch arm64 \
                 -isystem include -I . -fPIC \
                 -o $TESTGAME_DIR/native/macos/libsocket.dylib \
-                libsocket-bind.c
+                $BIND_FILE
       - name: Run tests
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
