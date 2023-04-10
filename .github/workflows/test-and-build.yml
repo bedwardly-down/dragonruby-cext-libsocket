@@ -48,7 +48,7 @@ jobs:
         run: |
           curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
           move dragonruby* dragonruby.zip
-          Expand-Archive -LiteralPath ..\dragonruby.zip -DestinationPath .
+          Expand-Archive -LiteralPath .\dragonruby.zip -DestinationPath .
       - name: Build extension
         run: |
           mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
