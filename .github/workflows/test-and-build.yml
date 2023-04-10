@@ -20,7 +20,7 @@ jobs:
           DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
-          curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
+          curl -L -O $DR_URI
           unzip $DR_ZIP
           chmod u+x ./dragonruby
       - name: Build extension
@@ -52,7 +52,7 @@ jobs:
           DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
-          curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
+          curl -L -O $DR_URI
           unzip $DR_ZIP
       - name: Build extension
         run: |
@@ -80,7 +80,7 @@ jobs:
           DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
-          curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
+          curl -L -O $DR_URI
           unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           chmod u+x ./dragonruby
       - name: Build extension
