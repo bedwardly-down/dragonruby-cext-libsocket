@@ -17,11 +17,9 @@ jobs:
       - name: Download dragonruby
         env:
           DR_PLATFORM: linux-amd64
-          DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
-          curl -L -O $DR_URI
-          unzip $DR_ZIP
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           chmod u+x ./dragonruby
       - name: Build extension
         run: |
@@ -49,11 +47,9 @@ jobs:
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
-          DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
-          curl -L -O $DR_URI
-          unzip $DR_ZIP
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
       - name: Build extension
         run: |
           mkdir  ${{ env.TESTGAME_DIR }}\native\windows-amd64\
@@ -77,10 +73,8 @@ jobs:
       - name: Download dragonruby
         env:
           DR_PLATFORM: macos
-          DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
-          curl -L -O $DR_URI
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           chmod u+x ./dragonruby
       - name: Build extension
