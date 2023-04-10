@@ -42,13 +42,6 @@ jobs:
         shell: pwsh
     steps:
       - uses: actions/checkout@v3
-
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: config set --name="cacheLocation" --value="C:\Cache"
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: upgrade -y chocolatey
       - uses: crazy-max/ghaction-chocolatey@v2
         with:
           args: install -y mingw llvm unzip curl
@@ -69,7 +62,7 @@ jobs:
                 -o '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\libsocket.dll' `
                 libsocket-bind.c
       - name: Run tests
-        run: .github\workflows\run_tests.ps1
+        run: bash .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
         with:
           name: libsocket.dll (windows-amd64)
