@@ -56,15 +56,12 @@ jobs:
           args: config set --name="cacheLocation" --value="C:\Cache"
       - uses: crazy-max/ghaction-chocolatey@v2
         with:
-          args: install -y unzip curl
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: upgrade all -y
+          args: install -y --force unzip llvm mingw
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
+          Invoke-WebRequest -Uri https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
           unzip dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
       - name: Build extension
         run: |
