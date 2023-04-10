@@ -9,8 +9,6 @@ env:
   DR_LICENSE_TIER: pro
   TESTGAME_DIR: .github/workflows/testgame
   TESTGAME_PWSH_DIR: .github\workflows\testgame
-  SDL_VIDEODRIVER: dummy
-  SDL_AUDIODRIVER: dummy
 
 jobs:
 #  linux:
