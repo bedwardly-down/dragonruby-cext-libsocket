@@ -41,15 +41,7 @@ jobs:
         shell: pwsh
     steps:
       - uses: actions/checkout@v3
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: config set --name="cacheLocation" --value="C:\Cache"
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: install -y unzip curl
-      - uses: crazy-max/ghaction-chocolatey@v2
-        with:
-          args: upgrade all -y
+
       - name: Cache Chocolatey packages
         id: cache-choco-pkgs
         uses: actions/cache@v3
@@ -59,6 +51,15 @@ jobs:
           path:
             C:\Cache
           key: ${{ runner.os }}-build-${{ env.cache-name }}
+      - uses: crazy-max/ghaction-chocolatey@v2
+        with:
+          args: config set --name="cacheLocation" --value="C:\Cache"
+      - uses: crazy-max/ghaction-chocolatey@v2
+        with:
+          args: install -y unzip curl
+      - uses: crazy-max/ghaction-chocolatey@v2
+        with:
+          args: upgrade all -y
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
