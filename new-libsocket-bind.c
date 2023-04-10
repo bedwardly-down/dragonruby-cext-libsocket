@@ -313,6 +313,30 @@ static mrb_value drb_ffi__ZTS4Flag_write_Set(mrb_state *state, mrb_value self) {
     (&((struct drb_foreign_object_ZTS4Flag *)DATA_PTR(self))->value)->write = new_value;
     return mrb_nil_value();
 }
+static mrb_value drb_ffi__ZTS4Flag_step_Get(mrb_state *state, mrb_value self) {
+    Flag record = drb_ffi__ZTS4Flag_FromRuby(state, self);
+    return drb_ffi__ZTSj_ToRuby(state, record.step);
+}
+static mrb_value drb_ffi__ZTS4Flag_step_Set(mrb_state *state, mrb_value self) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    unsigned int new_value = drb_ffi__ZTSj_FromRuby(state, args[0]);
+    (&((struct drb_foreign_object_ZTS4Flag *)DATA_PTR(self))->value)->step = new_value;
+    return mrb_nil_value();
+}
+static mrb_value drb_ffi__ZTS4Flag_accept_Get(mrb_state *state, mrb_value self) {
+    Flag record = drb_ffi__ZTS4Flag_FromRuby(state, self);
+    return drb_ffi__ZTSj_ToRuby(state, record.accept);
+}
+static mrb_value drb_ffi__ZTS4Flag_accept_Set(mrb_state *state, mrb_value self) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    unsigned int new_value = drb_ffi__ZTSj_FromRuby(state, args[0]);
+    (&((struct drb_foreign_object_ZTS4Flag *)DATA_PTR(self))->value)->accept = new_value;
+    return mrb_nil_value();
+}
 static mrb_value drb_ffi_init_server_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
@@ -445,4 +469,8 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_method(state, FlagClass, "read=", drb_ffi__ZTS4Flag_read_Set, MRB_ARGS_REQ(1));
     drb_api->mrb_define_method(state, FlagClass, "write", drb_ffi__ZTS4Flag_write_Get, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, FlagClass, "write=", drb_ffi__ZTS4Flag_write_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, FlagClass, "step", drb_ffi__ZTS4Flag_step_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, FlagClass, "step=", drb_ffi__ZTS4Flag_step_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, FlagClass, "accept", drb_ffi__ZTS4Flag_accept_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, FlagClass, "accept=", drb_ffi__ZTS4Flag_accept_Set, MRB_ARGS_REQ(1));
 }

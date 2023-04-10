@@ -45,7 +45,7 @@
 
 /* definitions */
 #define LIBSOCKET_BACKLOG 128  ///< Linux accepts a backlog value at listen() up to 128
-
+#define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
 /**
  *
  * The choice of using a struct here instead of using definitions like in the original code
@@ -67,11 +67,12 @@ typedef struct Flag
   unsigned int ipv6 : 1;
   unsigned int read : 1;
   unsigned int write : 1;
+  int step;
+  int accept;
 } Flag;
 
 /* static variables go here */
 static Flag flag;
-static int step = 0;
 
 /* set these as external variables so they can be set and travel between steps */
 static struct addrinfo *result, *result_check;
@@ -105,7 +106,7 @@ int init_server(const char *bind_addr, const char *bind_port,  int flags) {
   int sfd, domain, type, retval;
   struct addrinfo hints;
 
-  switch (step) {
+  switch (flag.step) {
     case 0:
       /* check if address and port are configured correctly */
       if (bind_addr == NULL || bind_port == NULL) {
@@ -157,14 +158,71 @@ int init_server(const char *bind_addr, const char *bind_port,  int flags) {
       freeaddrinfo(result);
       break;
     default:
-      step = 0;
+      flag.step = 0;
       return -1;
   }
+  flag.step = 0;
   return sfd;
+}
+
+int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
+                      char *src_service, size_t src_service_len,
+                      int flags) {
+  struct sockaddr_storage client_info;
+  int client_sfd;
+  socklen_t addrlen;
+
+  switch (flag.step) {
+    case 0:
+      addrlen = sizeof(struct sockaddr_storage);
+#ifdef linux
+      client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, flag.accept);
+#else
+      client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen);
+#endif
+      return -1;
+    case 1:
+      if (src_host_len > 0 ||
+          src_service_len > 0)  // If one of the things is wanted. If you give a null pointer
+                                // with a positive _len parameter, you won't get the address.
+      {
+          if (flags == LIBSOCKET_NUMERIC) {
+              flags = NI_NUMERICHOST | NI_NUMERICSERV;
+          } else {
+              flags = 0;  // To prevent errors: Unknown flags are ignored
+          }
+      }
+      break;
+    default:
+      flag.step = 0;
+      return -1;
+  }
+  flag.step = 0;
+  return client_sfd;
 }
 
 ssize_t send_to_socket(int sfd, const void* buf, size_t size, const char* host, 
                        const char* service, int sendto_flags) {
+  struct sockaddr_storage oldsock;
+  struct addrinfo hint;
+  socklen_t oldsocklen;
+
+  switch (flag.step) {
+    case 0:
+      oldsocklen = sizeof(struct sockaddr_storage);
+      if ((sfd < 0) || (buf == NULL || host == NULL || service == NULL)) return -1;
+      getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen);
+      return -1;
+    case 1:
+      memset(&hint, 0, sizeof(struct addrinfo));
+      return -1;
+    case 2:
+      
+    default:
+      flag.step = 0;
+      return -1;
+  }
+  
   return 0;
 }
 
@@ -172,6 +230,15 @@ ssize_t receive_from_socket(int sfd, void* buffer, size_t size,
                             char* src_host, size_t src_host_len,
                             char* src_service, size_t src_service_len,
                             int recvfrom_flags, int numeric) {
+  switch (flag.step) {
+    case 0:
+      /* check if using TCP and if it can accept data */
+      if (flag.protocol == 1) accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags);
+      return -1;
+    default:
+      flag.step = 0;
+      return -1;
+  }
   return 0;
 }
 
