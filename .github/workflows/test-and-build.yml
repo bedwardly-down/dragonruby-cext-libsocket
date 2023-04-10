@@ -11,30 +11,30 @@ env:
   TESTGAME_PWSH_DIR: .github\workflows\testgame
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download dragonruby
-        env:
-          DR_PLATFORM: linux-amd64
-        run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          chmod u+x ./dragonruby
-      - name: Build extension
-        run: |
-          mkdir -p $TESTGAME_DIR/native/linux-amd64/
-          clang -shared \
-                -isystem include -I . -fPIC \
-                -o $TESTGAME_DIR/native/linux-amd64/libsocket.so \
-                libsocket-bind.c
-      - name: Run tests
-        run: .github/workflows/run_tests.sh
-      - uses: actions/upload-artifact@v3
-        with:
-          name: libsocket.so (linux-amd64)
-          path: '${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so'
+#  linux:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Download dragonruby
+#        env:
+#          DR_PLATFORM: linux-amd64
+#        run: |
+#          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+#          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+#          chmod u+x ./dragonruby
+#      - name: Build extension
+#        run: |
+#          mkdir -p $TESTGAME_DIR/native/linux-amd64/
+#          clang -shared \
+#                -isystem include -I . -fPIC \
+#                -o $TESTGAME_DIR/native/linux-amd64/libsocket.so \
+#                libsocket-bind.c
+#      - name: Run tests
+#        run: .github/workflows/run_tests.sh
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: libsocket.so (linux-amd64)
+#          path: '${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so'
   windows:
     runs-on: windows-latest
     defaults:
@@ -48,7 +48,11 @@ jobs:
         run: |
           curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
           move dragonruby* dragonruby.zip
+<<<<<<< HEAD
           Expand-Archive -LiteralPath .\dragonruby.zip -DestinationPath .
+=======
+          Expand-Archive -LiteralPath ..\dragonruby.zip -DestinationPath .
+>>>>>>> db837c1 (Remove chocolatey process altogether)
       - name: Build extension
         run: |
           mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
@@ -65,29 +69,29 @@ jobs:
         with:
           name: libsocket.dll (windows-amd64)
           path: '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\libsocket.dll'
-  macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download dragonruby
-        env:
-          DR_PLATFORM: macos
-        run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          chmod u+x ./dragonruby
-      - name: Build extension
-        run: |
-          mkdir -p $TESTGAME_DIR/native/macos/
-          clang -shared \
-                -arch x86_64 -arch arm64 \
-                -isystem include -I . -fPIC \
-                -o $TESTGAME_DIR/native/macos/libsocket.dylib \
-                libsocket-bind.c
-      - name: Run tests
-        run: .github/workflows/run_tests.sh
-      - uses: actions/upload-artifact@v3
-        with:
-          name: libsocket.dylib (macos)
-          path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
-
+#  macos:
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Download dragonruby
+#        env:
+#          DR_PLATFORM: macos
+#        run: |
+#          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+#          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+#          chmod u+x ./dragonruby
+#      - name: Build extension
+#        run: |
+#          mkdir -p $TESTGAME_DIR/native/macos/
+#          clang -shared \
+#                -arch x86_64 -arch arm64 \
+#                -isystem include -I . -fPIC \
+#                -o $TESTGAME_DIR/native/macos/libsocket.dylib \
+#                libsocket-bind.c
+#      - name: Run tests
+#        run: .github/workflows/run_tests.sh
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: libsocket.dylib (macos)
+#          path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
+#
