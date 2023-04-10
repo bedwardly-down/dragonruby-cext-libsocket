@@ -61,6 +61,7 @@
 #include <mruby/string.h>
 #include <mruby/data.h>
 #include <dragonruby.h>
+#include <errno.h>
 #include "libsocket.h"
 #include "libsocket.c"
 
