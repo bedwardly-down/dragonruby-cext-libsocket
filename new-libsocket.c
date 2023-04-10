@@ -46,6 +46,7 @@
 /* definitions */
 #define LIBSOCKET_BACKLOG 128  ///< Linux accepts a backlog value at listen() up to 128
 #define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
+
 /**
  *
  * The choice of using a struct here instead of using definitions like in the original code
@@ -82,6 +83,14 @@ int close_socket(int sfd);
 int kill_server(int sfd);
 int c_tick();
 int get_error_code();
+
+/* To solve the accept4 Warning */
+#ifdef linux
+#ifndef __USE_GNU
+#define __USE_GNU
+extern int accept4(int sfd, struct sockaddr * addr, socklen_t * addrlen, int flags);
+#endif
+#endif
 
 /**
  *
@@ -233,7 +242,7 @@ ssize_t receive_from_socket(int sfd, void* buffer, size_t size,
   switch (flag.step) {
     case 0:
       /* check if using TCP and if it can accept data */
-      if (flag.protocol == 1) accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags);
+      if (flag.protocol != 0) accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags);
       return -1;
     default:
       flag.step = 0;
@@ -243,6 +252,29 @@ ssize_t receive_from_socket(int sfd, void* buffer, size_t size,
 }
 
 int close_socket(int sfd) {
+  /* since this process can happen during any other process, always return step back to original state */
+  int old_step = flag.step;
+  flag.step = 0;
+  switch (flag.step) {
+    case 0:
+      if (sfd < 0) return -1;
+      flag.step += 1;
+    case 1:
+#if defined(_WIN32)
+      if (closesocket(sfd) < 0) return -1;
+#elif defined(linux) || defined(__APPLE__)
+      if (close(sfd) < 0) return -1;
+#endif
+      flag.step += 1;
+    case 2:
+      if (result_check == NULL) return -1;
+      freeaddrinfo(result);
+      break;
+    default:
+      flag.step = 0;
+      return -1;
+  }
+  flag.step = old_step;
   return 0;
 }
 
