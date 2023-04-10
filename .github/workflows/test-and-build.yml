@@ -44,15 +44,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Download dragonruby
         env:
-          DR_PLATFORM: windows-amd64
+          ZIP_FILE: dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-windows-amd64.zip
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
-          move dragonruby* dragonruby.zip
-<<<<<<< HEAD
-          Expand-Archive -LiteralPath .\dragonruby.zip -DestinationPath .
-=======
-          Expand-Archive -LiteralPath ..\dragonruby.zip -DestinationPath .
->>>>>>> db837c1 (Remove chocolatey process altogether)
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$env:DR_VERSION/$env:ZIP_FILE
+          Expand-Archive -LiteralPath $env:ZIP_FILE -DestinationPath .
       - name: Build extension
         run: |
           mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
