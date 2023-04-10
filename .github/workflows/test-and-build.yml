@@ -59,12 +59,12 @@ jobs:
           args: upgrade -y chocolatey
       - uses: crazy-max/ghaction-chocolatey@v2
         with:
-          args: install -y mingw llvm unzip
+          args: install -y mingw llvm unzip curl
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
         run: |
-          Invoke-WebRequest -Uri https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
           unzip dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
       - name: Build extension
         run: |
