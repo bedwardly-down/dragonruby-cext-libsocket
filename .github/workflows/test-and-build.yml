@@ -17,10 +17,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Download dragonruby
         env:
-          DR_PLATFORM: linux-amd64
+          ZIP_FILE: dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-linux-amd64.zip
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$ZIP_FILE
+          unzip $ZIP_FILE
           chmod u+x ./dragonruby
       - name: Build extension
         run: |
@@ -70,10 +70,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Download dragonruby
         env:
-          DR_PLATFORM: macos
+          ZIP_FILE: dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-macos.zip
         run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$ZIP_FILE
+          unzip $ZIP_FILE
           chmod u+x ./dragonruby
       - name: Build extension
         run: |
