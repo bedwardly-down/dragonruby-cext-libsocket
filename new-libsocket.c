@@ -92,6 +92,13 @@ extern int accept4(int sfd, struct sockaddr * addr, socklen_t * addrlen, int fla
 #endif
 #endif
 
+static inline int check_error(int sfd) {
+  if (sfd < 0) {
+    flag.error = 1;
+    return -1;
+  }
+  return sfd;
+}
 /**
  *
  * @brief the starting point for creating a server
@@ -115,13 +122,23 @@ int init_server(const char *bind_addr, const char *bind_port,  int flags) {
   int sfd, domain, type, retval;
   struct addrinfo hints;
 
+#ifdef _WIN32
+  WSADATA d;
+#endif
+
   switch (flag.step) {
     case 0:
-      /* check if address and port are configured correctly */
-      if (bind_addr == NULL || bind_port == NULL) {
+#ifdef _WIN32
+      if (WSAStartup(MAKEWORD(2, 2), &d)) {
         flag.error = 1;
         return -1;
-      };
+      }
+#endif
+
+      /* check if address and port are configured correctly */
+      if (flag.error == 0) 
+        check_error(bind_addr == NULL || bind_port == NULL);
+      return -1;
     case 1:
       /* check what protocol to use */
       if (flag.protocol == 0) type = SOCK_DGRAM;
@@ -139,28 +156,32 @@ int init_server(const char *bind_addr, const char *bind_port,  int flags) {
       return -1;
     case 4:
       /* make sure the return value is completely empty */
-      if (0 != (retval = getaddrinfo(bind_addr, bind_port, &hints, &result))) {
-        flag.error = 1;
-        return -1;
-      }
-      result_check = result;
+      check_error(retval = getaddrinfo(bind_addr, bind_port, &hints, &result));
+      if (flag.error == 0)
+        result_check = result;
       return -1;
     case 5:
       /* go through the linked list of struct addrinfo elements */
-      if (result_check != NULL) result_check = result_check->ai_next;
-      sfd = socket(result_check->ai_family, result_check->ai_socktype | flags, result_check->ai_protocol);
-      retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
+      if (result_check != NULL) 
+        result_check = result_check->ai_next;
+      
+      sfd = check_error(socket(result_check->ai_family, 
+                               result_check->ai_socktype | flags, result_check->ai_protocol));
+      if (flag.error == 0)
+        retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
 
-      if (type == SOCK_STREAM) retval = listen(sfd, LIBSOCKET_BACKLOG);
+      if (type == SOCK_STREAM) retval = check_error(listen(sfd, LIBSOCKET_BACKLOG));
 
-      if (retval != 0) {
+      if (retval != 0 && flag.error == 0) {
         close_socket(sfd);
-        return -1;
       }
       return -1;
     case 6:
       /* final check */
-      if (result_check == NULL) freeaddrinfo(result);
+      if (result_check == NULL) {
+        freeaddrinfo(result);
+        flag.error = 1;
+      }
       return -1;
     case 7:
       /* we have socket creation */
@@ -168,6 +189,7 @@ int init_server(const char *bind_addr, const char *bind_port,  int flags) {
       break;
     default:
       flag.step = 0;
+      flag.error = 1;
       return -1;
   }
   flag.step = 0;
@@ -185,9 +207,9 @@ int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
     case 0:
       addrlen = sizeof(struct sockaddr_storage);
 #ifdef linux
-      client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, flag.accept);
+      check_error(client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, flag.accept));
 #else
-      client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen);
+      check_error(client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen));
 #endif
       return -1;
     case 1:
@@ -204,6 +226,7 @@ int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
       break;
     default:
       flag.step = 0;
+      flag.error = 1;
       return -1;
   }
   flag.step = 0;
@@ -219,16 +242,18 @@ ssize_t send_to_socket(int sfd, const void* buf, size_t size, const char* host,
   switch (flag.step) {
     case 0:
       oldsocklen = sizeof(struct sockaddr_storage);
-      if ((sfd < 0) || (buf == NULL || host == NULL || service == NULL)) return -1;
-      getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen);
-      return -1;
+      check_error((sfd < 0) || (buf == NULL || host == NULL || service == NULL));
+      if (flag.error == 0) 
+        check_error(getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen));
+      return -1;        
     case 1:
       memset(&hint, 0, sizeof(struct addrinfo));
       return -1;
     case 2:
-      
+      return -1;
     default:
       flag.step = 0;
+      flag.error = 1;
       return -1;
   }
   
@@ -242,10 +267,12 @@ ssize_t receive_from_socket(int sfd, void* buffer, size_t size,
   switch (flag.step) {
     case 0:
       /* check if using TCP and if it can accept data */
-      if (flag.protocol != 0) accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags);
+      if (flag.protocol != 0) 
+        check_error(accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags));
       return -1;
     default:
       flag.step = 0;
+      flag.error = 1;
       return -1;
   }
   return 0;
@@ -257,21 +284,23 @@ int close_socket(int sfd) {
   flag.step = 0;
   switch (flag.step) {
     case 0:
-      if (sfd < 0) return -1;
-      flag.step += 1;
+      check_error(sfd);
+      if (flag.error == 0) flag.step += 1;
     case 1:
 #if defined(_WIN32)
-      if (closesocket(sfd) < 0) return -1;
+      check_error(closesocket(sfd));
 #elif defined(linux) || defined(__APPLE__)
-      if (close(sfd) < 0) return -1;
+      check_error(close(sfd));
 #endif
-      flag.step += 1;
+      if (flag.error == 0) flag.step += 1;
+      else break;
     case 2:
-      if (result_check == NULL) return -1;
-      freeaddrinfo(result);
+      check_error(result_check == NULL);
+      if (flag.error == 0) freeaddrinfo(result);
       break;
     default:
       flag.step = 0;
+      flag.error = 1;
       return -1;
   }
   flag.step = old_step;
