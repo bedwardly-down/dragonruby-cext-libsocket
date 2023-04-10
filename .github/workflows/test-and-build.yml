@@ -44,6 +44,8 @@ jobs:
       - uses: crazy-max/ghaction-chocolatey@v2
         with:
           args: config set --name="cacheLocation" --value="C:\Cache"
+      - uses: crazy-max/ghaction-chocolatey@v2
+        with:
           args: install -y llvm unzip mingw curl visualstudio2022buildtools
       - name: Cache Chocolatey packages
         id: cache-choco-pkgs
