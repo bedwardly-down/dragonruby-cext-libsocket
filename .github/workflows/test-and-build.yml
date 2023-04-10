@@ -7,8 +7,6 @@ on:
 env:
   DR_VERSION: 4.7
   DR_LICENSE_TIER: pro
-  DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-  DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
   TESTGAME_DIR: .github/workflows/testgame
 
 jobs:
@@ -19,6 +17,8 @@ jobs:
       - name: Download dragonruby
         env:
           DR_PLATFORM: linux-amd64
+          DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
           curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
           unzip $DR_ZIP
@@ -49,6 +49,8 @@ jobs:
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
+          DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
           curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
           unzip $DR_ZIP
@@ -75,6 +77,8 @@ jobs:
       - name: Download dragonruby
         env:
           DR_PLATFORM: macos
+          DR_ZIP: dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
+          DR_URI: https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/$DR_ZIP
         run: |
           curl -L -O --retry 10 --retry-max-time 0 -C - $DR_URI
           unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
