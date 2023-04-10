@@ -8,6 +8,8 @@ env:
   DR_VERSION: 4.7
   DR_LICENSE_TIER: pro
   TESTGAME_DIR: .github/workflows/testgame
+  SDL_VIDEODRIVER: dummy
+  SDL_AUDIODRIVER: dummy
 
 jobs:
 #  linux:
@@ -68,13 +70,13 @@ jobs:
           unzip dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
       - name: Build extension
         run: |
-          mkdir  .\.github\workflows\test\native\windows-amd64\
+          mkdir  '${{ env.TESTGAME_DIR }}\native\windows-amd64\'
           clang -shared `
                 --sysroot=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64 `
                 --target=x86_64-w64-mingw32 `
                 -fuse-ld=lld `
                 -isystem include -I . -lws2_32 `
-                -o .\.github\workflows\test\native\windows-amd64\libsocket.dll `
+                -o '${{ env.TESTGAME_DIR }}\native\windows-amd64\libsocket.dll `
                 libsocket-bind.c
       - name: Run tests
         run: .github\workflows\run_tests.ps1
