@@ -46,7 +46,10 @@ jobs:
           args: config set --name="cacheLocation" --value="C:\Cache"
       - uses: crazy-max/ghaction-chocolatey@v2
         with:
-          args: install -y llvm unzip mingw curl visualstudio2022buildtools
+          args: install -y unzip curl
+      - uses: crazy-max/ghaction-chocolatey@v2
+        with:
+          args: upgrade all -y
       - name: Cache Chocolatey packages
         id: cache-choco-pkgs
         uses: actions/cache@v3
@@ -66,7 +69,7 @@ jobs:
         run: |
           mkdir  .\.github\workflows\test\native\windows-amd64\
           clang -shared `
-                --sysroot=C:\mingw-64 `
+                --sysroot=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64 `
                 --target=x86_64-w64-mingw32 `
                 -fuse-ld=lld `
                 -isystem include -I . -lws2_32 `
