@@ -50,9 +50,12 @@ jobs:
       - name: Cache Chocolatey packages
         id: cache-choco-pkgs
         uses: actions/cache@v3
+        env:
+          cache-name: choco-cache
         with:
           path:
             C:\Cache
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
       - name: Download dragonruby
         env:
           DR_PLATFORM: windows-amd64
