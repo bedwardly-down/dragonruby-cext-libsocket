@@ -305,6 +305,7 @@ int kill_server(int sfd) {
     case 3:
 #ifdef _WIN32
       check_error(WSACleanup());
+#endif
       return -1;
     default:
       flag.step = 0;
