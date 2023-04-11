@@ -99,24 +99,6 @@ static inline int check_error(int sfd) {
   }
   return sfd;
 }
-/**
- *
- * @brief the starting point for creating a server
- *
- * Due to the purpose of this library, unless the protocol flag is set, initialize a
- * UDP socket and server. In game development, there's only a small handful of instances
- * where running a TCP server is preferrable. One of the biggest ones is Twitch chat.
- *
- * @param bind_addr This is the IP address or URL you want to connect to.
- * @param bind_port This is simply the port you want to connect to.
- * @param flags This is where you tweak the server settings based on your operating system.
- *  The original library heavily focused on Linux. This may get epanded as needed.
- *
- * NOTE: I removed the two protocol arguments from the original code due to believing that
- * setting a global flag would be better if it's needed. The goal is to make this less 
- * generalized and more focused on what would be best for game development.
- * 
- */
 
 int init_server(const char *bind_addr, const char *bind_port,  int flags) {
   int sfd, domain, type, retval;
@@ -196,7 +178,7 @@ int init_server(const char *bind_addr, const char *bind_port,  int flags) {
   return sfd;
 }
 
-int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
+static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
                       char *src_service, size_t src_service_len,
                       int flags) {
   struct sockaddr_storage client_info;
@@ -308,6 +290,27 @@ int close_socket(int sfd) {
 }
 
 int kill_server(int sfd) {
+  switch (flag.step) {
+    case 0:
+      check_error(sfd);
+      return -1;
+    case 1:
+      if (flag.read == 1)
+        check_error(shutdown(sfd, SHUT_RD));
+      return -1;
+    case 2:
+      if (flag.write == 1)
+        check_error(shutdown(sfd, SHUT_WR));
+      return -1;
+    case 3:
+#ifdef _WIN32
+      check_error(WSACleanup());
+      return -1;
+    default:
+      flag.step = 0;
+      flag.error = 1;
+      return -1;
+  }
   return 0;
 }
 
