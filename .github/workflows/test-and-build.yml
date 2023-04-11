@@ -14,15 +14,12 @@ env:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    env:
+      DR_PLATFORM: linux-amd64
     steps:
       - uses: actions/checkout@v2
       - name: Download dragonruby
-        env:
-          DR_PLATFORM: linux-amd64
-        run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          chmod u+x ./dragonruby
+        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION $DR_PLATFORM
       - name: Build extension
         run: |
           mkdir -p $TESTGAME_DIR/native/linux-amd64/
@@ -38,18 +35,12 @@ jobs:
           path: '${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so'
   windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: pwsh
+    env:
+      DR_PLATFORM: windows-amd64
     steps:
       - uses: actions/checkout@v3
       - name: Download dragonruby
-        env:
-          DR_PLATFORM: windows-amd64
-        run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/${{ env.DR_VERSION }}/dragonruby-for-ci-${{ env.DR_VERSION }}-${{ env.DR_LICENSE_TIER }}-${{ env.DR_PLATFORM }}.zip
-          move dragonruby* dragonruby.zip
-          Expand-Archive -LiteralPath .\dragonruby.zip -DestinationPath .
+        run: bash .github/workflows/download_dr_for_ci.sh $env:DR_VERSION $env:DR_PLATFORM
       - name: Build extension
         run: |
           mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
@@ -68,15 +59,12 @@ jobs:
           path: '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\libsocket.dll'
   macos:
     runs-on: macos-latest
+    env:
+      DR_PLATFORM: macos
     steps:
       - uses: actions/checkout@v2
       - name: Download dragonruby
-        env:
-          DR_PLATFORM: macos
-        run: |
-          curl -L -O https://github.com/kfischer-okarin/dragonruby-for-ci/releases/download/$DR_VERSION/dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          unzip dragonruby-for-ci-$DR_VERSION-$DR_LICENSE_TIER-$DR_PLATFORM.zip
-          chmod u+x ./dragonruby
+        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION $DR_PLATFORM
       - name: Build extension
         run: |
           mkdir -p $TESTGAME_DIR/native/macos/
