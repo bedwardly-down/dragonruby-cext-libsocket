@@ -27,7 +27,13 @@ case $platform in
           -o $target_dir/libsocket.dylib \
           $source_entrypoint;;
   windows-amd64)
+    if [ -z "$SYSROOT" ]; then
+      echo "Please set the SYSROOT environment variable when building for Windows."
+      exit 1
+    fi
+
     clang -shared \
+          --sysroot=$SYSROOT \
           --target=x86_64-w64-mingw32 \
           -fuse-ld=lld \
           -isystem ./dragonruby/include -I . -lws2_32 \
