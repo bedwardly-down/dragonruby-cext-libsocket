@@ -25,6 +25,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Download dragonruby
         run: .github/workflows/download_dr_for_ci.sh ${{ matrix.dr_version }}
+      - name: Windows build settings
+        run: echo "SYSROOT=/C/ProgramData/chocolatey/lib/mingw/tools/install/mingw64" >> $GITHUB_ENV
+        if: runner.os == 'Windows'
       - name: Build extension
         run: scripts/build.sh $TESTGAME_DIR/native/$(scripts/dr_platform.sh)
       - name: Run tests

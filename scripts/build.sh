@@ -28,7 +28,6 @@ case $platform in
           $source_entrypoint;;
   windows-amd64)
     clang -shared \
-          --sysroot=/C/ProgramData/chocolatey/lib/mingw/tools/install/mingw64 \
           --target=x86_64-w64-mingw32 \
           -fuse-ld=lld \
           -isystem ./dragonruby/include -I . -lws2_32 \
