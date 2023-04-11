@@ -5,7 +5,6 @@ on:
   push:
 
 env:
-  DR_VERSION: 4.7
   TESTGAME_DIR: .github/workflows/testgame
 
 jobs:
@@ -16,6 +15,8 @@ jobs:
           - ubuntu-22.04
           - windows-2022
           - macos-12
+        dr_version:
+          - '4.7'
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
@@ -23,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION
+        run: .github/workflows/download_dr_for_ci.sh ${{ matrix.dr_version }}
       - name: Build extension
         run: scripts/build.sh $TESTGAME_DIR/native/$(scripts/dr_platform.sh)
       - name: Run tests
