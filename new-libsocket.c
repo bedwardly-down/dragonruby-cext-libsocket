@@ -48,6 +48,17 @@
 #define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
 
 /**
+ * For Windows shutdown implementation compatibility
+ *
+ * See here: https://learn.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-shutdown (WINAPI)
+ * and here: https://www.man7.org/linux/man-pages/man2/shutdown.2.html (Linux Manpage)
+ */
+#ifdef _WIN32
+#define SHUT_RD SD_RECEIVE
+#define SHUT_WR SD_SEND
+#endif
+
+/**
  *
  * The choice of using a struct here instead of using definitions like in the original code
  * was primarily for scalability and long term memory usage reduction. A struct allocates 4 bytes
