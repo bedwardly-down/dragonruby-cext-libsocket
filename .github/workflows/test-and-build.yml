@@ -21,12 +21,7 @@ jobs:
       - name: Download dragonruby
         run: .github/workflows/download_dr_for_ci.sh $DR_VERSION $DR_PLATFORM
       - name: Build extension
-        run: |
-          mkdir -p $TESTGAME_DIR/native/linux-amd64/
-          clang -shared \
-                -isystem include -I . -fPIC \
-                -o $TESTGAME_DIR/native/linux-amd64/libsocket.so \
-                $BIND_FILE
+        run: scripts/build.sh $TESTGAME_DIR/native/$DR_PLATFORM
       - name: Run tests
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
@@ -42,15 +37,7 @@ jobs:
       - name: Download dragonruby
         run: bash .github/workflows/download_dr_for_ci.sh $env:DR_VERSION $env:DR_PLATFORM
       - name: Build extension
-        run: |
-          mkdir  '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\'
-          clang -shared `
-                --sysroot=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64 `
-                --target=x86_64-w64-mingw32 `
-                -fuse-ld=lld `
-                -isystem include -I . -lws2_32 `
-                -o '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\libsocket.dll' `
-                '${{ env.BIND_FILE }}'
+        run: bash scripts/build.sh $env:TESTGAME_DIR/native/$env:DR_PLATFORM
       - name: Run tests
         run: bash .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
@@ -66,13 +53,7 @@ jobs:
       - name: Download dragonruby
         run: .github/workflows/download_dr_for_ci.sh $DR_VERSION $DR_PLATFORM
       - name: Build extension
-        run: |
-          mkdir -p $TESTGAME_DIR/native/macos/
-          clang -shared \
-                -arch x86_64 -arch arm64 \
-                -isystem include -I . -fPIC \
-                -o $TESTGAME_DIR/native/macos/libsocket.dylib \
-                $BIND_FILE
+        run: scripts/build.sh $TESTGAME_DIR/native/$DR_PLATFORM
       - name: Run tests
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
