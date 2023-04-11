@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION $DR_PLATFORM
+        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION
       - name: Build extension
         run: scripts/build.sh $TESTGAME_DIR/native/$DR_PLATFORM
       - name: Run tests
@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download dragonruby
-        run: bash .github/workflows/download_dr_for_ci.sh $env:DR_VERSION $env:DR_PLATFORM
+        run: bash .github/workflows/download_dr_for_ci.sh $env:DR_VERSION
       - name: Build extension
         run: bash scripts/build.sh $env:TESTGAME_DIR/native/$env:DR_PLATFORM
       - name: Run tests
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION $DR_PLATFORM
+        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION
       - name: Build extension
         run: scripts/build.sh $TESTGAME_DIR/native/$DR_PLATFORM
       - name: Run tests
