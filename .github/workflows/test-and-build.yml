@@ -6,58 +6,41 @@ on:
 
 env:
   DR_VERSION: 4.7
-  DR_LICENSE_TIER: pro
   TESTGAME_DIR: .github/workflows/testgame
-  TESTGAME_PWSH_DIR: .github\workflows\testgame
-  BIND_FILE: new-libsocket-bind.c
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
-    env:
-      DR_PLATFORM: linux-amd64
+  build_and_test:
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-22.04
+          - windows-2022
+          - macos-12
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v2
       - name: Download dragonruby
         run: .github/workflows/download_dr_for_ci.sh $DR_VERSION
       - name: Build extension
-        run: scripts/build.sh $TESTGAME_DIR/native/$DR_PLATFORM
+        run: scripts/build.sh $TESTGAME_DIR/native/$(scripts/dr_platform.sh)
       - name: Run tests
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
         with:
-          name: libsocket.so (linux-amd64)
-          path: '${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so'
-  windows:
-    runs-on: windows-latest
-    env:
-      DR_PLATFORM: windows-amd64
-    steps:
-      - uses: actions/checkout@v3
-      - name: Download dragonruby
-        run: bash .github/workflows/download_dr_for_ci.sh $env:DR_VERSION
-      - name: Build extension
-        run: bash scripts/build.sh $env:TESTGAME_DIR/native/$env:DR_PLATFORM
-      - name: Run tests
-        run: bash .github/workflows/run_tests.sh
+          name: dragonruby-cext-libsocket-linux-amd64
+          path: ${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so
+        if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v3
         with:
-          name: libsocket.dll (windows-amd64)
-          path: '${{ env.TESTGAME_PWSH_DIR }}\native\windows-amd64\libsocket.dll'
-  macos:
-    runs-on: macos-latest
-    env:
-      DR_PLATFORM: macos
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh $DR_VERSION
-      - name: Build extension
-        run: scripts/build.sh $TESTGAME_DIR/native/$DR_PLATFORM
-      - name: Run tests
-        run: .github/workflows/run_tests.sh
+          name: dragonruby-cext-libsocket-windows-amd64
+          path: ${{ env.TESTGAME_DIR }}/native/windows-amd64/libsocket.dll
+        if: runner.os == 'Windows'
       - uses: actions/upload-artifact@v3
         with:
-          name: libsocket.dylib (macos)
+          name: dragonruby-cext-libsocket-macos
           path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
+        if: runner.os == 'macOS'
 
