@@ -441,7 +441,7 @@ static mrb_value drb_ffi_c_send_Binding(mrb_state *state, mrb_value value) {
     if (argc != 6)
         drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_send': wrong number of arguments (%d for 6)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
-    void *buf_1 = drb_ffi__ZTSPv_FromRuby(state, args[1]);
+    char *buf_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     size_t size_2 = drb_ffi__ZTSj_FromRuby(state, args[2]);
     char *host_3 = drb_ffi__ZTSPc_FromRuby(state, args[3]);
     char *service_4 = drb_ffi__ZTSPc_FromRuby(state, args[4]);
@@ -453,10 +453,10 @@ static mrb_value drb_ffi_c_receive_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
-    if (argc != 9)
+    if (argc != 8)
         drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_receive': wrong number of arguments (%d for 8)", argc);
     int sfd_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
-    void *buffer_1 = drb_ffi__ZTSPv_FromRuby(state, args[1]);
+    char *buffer_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
     size_t size_2 = drb_ffi__ZTSj_FromRuby(state, args[2]);
     char *src_host_3 = drb_ffi__ZTSPc_FromRuby(state, args[3]);
     size_t src_host_len_4 = drb_ffi__ZTSj_FromRuby(state, args[4]);

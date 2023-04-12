@@ -234,12 +234,14 @@ static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len
   return client_sfd;
 }
 
-ssize_t c_send(int sfd, const void* buf, size_t size, const char* host, 
+ssize_t c_send(int sfd, char* buf, size_t size, const char* host, 
                const char* service, int sendto_flags) {
   struct sockaddr_storage oldsock;
   struct addrinfo hint;
   socklen_t oldsocklen;
+  int return_value;
   error.trigger = "send";
+  const void* buff = &buf;
 
   switch (hook.step) {
     case 0:
@@ -251,22 +253,33 @@ ssize_t c_send(int sfd, const void* buf, size_t size, const char* host,
       memset(&hint, 0, sizeof(struct addrinfo));
       break;
     case 3:
-      break;
+      result_check = result;
+      if (result_check != NULL)
+        result_check = result_check->ai_next;
+      if (-1 != (return_value = sendto(
+        sfd, buf, size, sendto_flags, result_check->ai_addr,
+        result_check->ai_addrlen
+      )))
+        break;
+      else
+        check_error(return_value);
+    case 4:
+      freeaddrinfo(result);
     default:
       hook.step = 0;
       hook.error = 1;
       break;
   }
-  
-  return 0;
+  return return_value;
 }
 
-ssize_t c_receive(int sfd, void* buffer, size_t size,
+ssize_t c_receive(int sfd, char* buffer, size_t size,
                   char* src_host, size_t src_host_len,
                   char* src_service, size_t src_service_len,
                   int recvfrom_flags) {
   ssize_t bytes;
   error.trigger = "receive";
+  void* buff = &buffer;
 
   switch (hook.step) {
     case 0:
@@ -279,7 +292,7 @@ ssize_t c_receive(int sfd, void* buffer, size_t size,
     case 2:
       return check_error(buffer == NULL || size == 0);
     case 3:
-      memset(buffer, 0, size);
+      memset(buff, 0, size);
       break;
     case 4:
       iter = strlen(src_host);

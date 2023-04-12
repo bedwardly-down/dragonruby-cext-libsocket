@@ -95,7 +95,7 @@ class Socket
   #
   # no params
   def open
-    c_open @socket
+    c_open @socket, @config.host, @config.port
   end
 
   # what you do when you are done connecting but may want to start up later
