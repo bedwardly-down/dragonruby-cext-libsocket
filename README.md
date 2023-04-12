@@ -1,5 +1,15 @@
 # Libsocket Dragonruby C Extension
 
+## READ BEFORE TESTING AND USING
+
+Right now we are in a testing phase. If you want to give feedback and test ffor how this works, do this:
+
+```
+git clone --branch dev https://github.com/bedwardly-down/dragonruby-cext-libsocket.git
+```
+
+If git branch shows `master`, delete your git repo and try again. I'll only take `dev` feedback and pull requests until at least the end of this phase.
+
 ## Requirements
 
 See [here](https://github.com/DragonRuby/dragonruby-game-toolkit-contrib/tree/master/samples/12_c_extensions/01_basics#requirements)
