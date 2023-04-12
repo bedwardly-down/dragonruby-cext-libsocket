@@ -108,7 +108,7 @@ class Socket
   #
   # @param (string) message - whatever you want the other instance to receive
   def send message
-    FFI::SOCKET.send_to_socket @socket, message, @config.message_length, @config.host, @config.service, @config.flags
+    FFI::SOCKET.send_to_socket @socket, message, @config.message_length, @config.host, @config.port, @config.flags
   end
 
   # receive a message from the other socket
