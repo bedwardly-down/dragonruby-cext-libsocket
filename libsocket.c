@@ -1,11 +1,13 @@
 /**
+ * 
  * @file    libsocket.c
  *
- * @brief Contains all C libsocket functions.
+ * @brief   main libsocket library source code for DragonRuby.
  *
- * This is the main file for the DragonRuby port of libinetsocket. 
- * It contains all functions used to work with INET and INET6 sockets, 
- * both TCP and UDP.
+ * The core goal of this library is to provide scalable and functional networking
+ * support for the DragonRuby Game Toolkit. This library is based on the C portion of
+ * libsocket found at https://github.com/dermesser/libsocket
+ * 
  */
 
 /*
@@ -15,7 +17,8 @@
    DragonRuby is a registered trademark of DragonRuby LLP 
    (c) 2012 and following, amirrajan <amir.rajan@dragonruby.org>
  
-   Miscellaneous code updates for this plugin that were not originally a part of libsocket
+   All modifications of the original code belong to a partnership between the
+   name below and the DragonRuby game development community, all rights reserved
    (c) 2023 and following, bedwardly-down <social@brandongrows.me>
 
    Redistribution and use in source and binary forms, with or without
@@ -40,74 +43,9 @@
 
 */
 
-/**
- * @brief Checks return value for error.
- *
- * Every value returned by a syscall is passed to this function. It returns 0
- * if the return value is ok or -1 if there was an error.
- * If the macro `VERBOSE` is defined, an appropriate message is printed to
- * STDERR.
- *
- * @param return_value A return value from a syscall.
- *
- * @retval 0 The syscall was successful.
- * @retval -1 There was an error.
- */
-
-/*
- * Structure of the functions defined here:
- *
- * <Declarations>
- * <Checks on passed arguments>
- * <actual code>
- *
- */
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#define LIBSOCKET_VERSION 2.4
-
-/* Macro definitions */
-
-//# define VERBOSE // Write errors on stderr?
-
-#define LIBSOCKET_BACKLOG \
-    128  ///< Linux accepts a backlog value at listen() up to 128
-
-// Symbolic macros
-#define LIBSOCKET_TCP 1  ///< Protocol flag
-#define LIBSOCKET_UDP 2  ///< Protocol flag
-
-#define LIBSOCKET_IPv4 3  ///< Address family flag
-#define LIBSOCKET_IPv6 4  ///< Adress family flag
-#define LIBSOCKET_BOTH \
-    5  ///< Adress family flag: what fits best (TCP/UDP or IPv4/6; delegate the
-       ///< decision to `getaddrinfo()`)
-
-#define LIBSOCKET_READ 1   ///< Flag for shutdown
-#define LIBSOCKET_WRITE 2  ///< Flag for shutdown
-
-#define LIBSOCKET_NUMERIC \
-    1  ///< May be specified as flag for functions to signalize that the name
-       ///< resolution should not be performed.
-
-/**
- * Writes an error to stderr without modifying errno.
- *
- * NOTE: Windows part is a stub. May need to flesh out further.
- */
-#if defined(_WIN32)
-#define debug_write(str) {}
-#elif defined(linux) || defined(__APPLE__)
-#define debug_write(str)                \
-    {                                   \
-        int verbose_errno_save = errno; \
-        write(2, str, strlen(str));     \
-        errno = verbose_errno_save;     \
-    }
-#endif
+/* definitions */
+#define LIBSOCKET_BACKLOG 128  ///< Linux accepts a backlog value at listen() up to 128
+#define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
 
 /**
  * For Windows shutdown implementation compatibility
@@ -120,1069 +58,408 @@
 #define SHUT_WR SD_SEND
 #endif
 
-#ifdef __FreeBSD__
-#define _TRADITIONAL_RDNS
-#endif
-
-/* custom private variables to help connect to DragonRuby */
-static int connection_result = 0;
-static struct addrinfo *stream_result, *stream_result_check;
-static signed int sock_flags = 0;
-
-/* Forgot to define functions */
-static int close_socket(int socket);
-
 /**
- * @brief the update function that DragonRuby ticks
  *
- * All functions that must be run every DragonRuby tick go here.
- *
- * @return cycle complete
- */
-
-int c_tick() {
-  int complete = 0;
-  return complete;
-}
-
-static inline signed int check_error(int return_value) {
-    if (return_value < 0) {
-
-/* Stubbed since this is all being handled directly in DragonRuby
-#ifdef VERBOSE
-        FomatMessage(
-          FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
-          0, WSAGetLastError(), 0, errbuf, 256, 0
-        );
-        debug_write(errbuf);
-#endif
-#elif defined(linux)
-    if (return_value < 0) {
-#ifdef VERBOSE
-        errbuf = strerror(errno);
-        debug_write(errbuf);
-#endif
-#endif */
-        return -1;
-    }
-
-    return 0;
-}
-
-/**
- * @brief Create and connect a new TCP/IP socket
- *
- * This function returns a working client TCP/IP socket.
- *
- * @param host The host the socket will be connected to (everything resolvable,
- * e.g. "::1", "8.8.8.8", "example.com")
- * @param service The host's port, either numeric or as service name ("http").
- * @param proto_osi3 `LIBSOCKET_IPv4` or `LIBSOCKET_IPv6`.
- * @param flags Flags to be passed to `socket(2)`. Most flags are Linux-only!
- *
- * @return A valid socket file descriptor.
- */
-int create_stream_socket(const char *host, const char *service,
-                              char proto_osi3, int flags) {
-#ifdef _WIN32
-    WSADATA d;
-    if (WSAStartup(MAKEWORD(2, 2), &d)) {
-      fprintf(stderr, "Failed to initialize.\n");
-    }
-#endif
-
-    int sfd, return_value;
-    struct addrinfo hint, *result, *result_check;
-
-    if (host == NULL || service == NULL) return -1;
-
-    memset(&hint, 0, sizeof hint);
-
-    // set address family
-    switch (proto_osi3) {
-        case LIBSOCKET_IPv4:
-            hint.ai_family = AF_INET;
-            break;
-        case LIBSOCKET_IPv6:
-            hint.ai_family = AF_INET6;
-            break;
-        case LIBSOCKET_BOTH:
-            hint.ai_family = AF_UNSPEC;
-            break;
-        default:
-            return -1;
-    }
-
-    // Transport protocol is TCP
-    hint.ai_socktype = SOCK_STREAM;
-
-    if (0 != (return_value = getaddrinfo(host, service, &hint, &result))) {
-        return -1;
-    }
-
-    // As described in "The Linux Programming Interface", Michael Kerrisk 2010,
-    // chapter 59.11 (p. 1220ff)
-
-    for (result_check = result; result_check != NULL;
-         result_check = result_check->ai_next)  // go through the linked list of
-                                                // struct addrinfo elements
-    {
-        sfd = socket(result_check->ai_family, result_check->ai_socktype | sock_flags,
-                     result_check->ai_protocol);
-
-        if (sfd < 0)  // Error!!!
-          continue;
-
-        connection_result = connect(sfd, result_check->ai_addr,
-                              result_check->ai_addrlen);
-        if ((connection_result != -1))
-          break;
-    }
-
-    // Left in code for simple fact that it is useful
-    if (result_check == NULL)
-    {
-        close_socket(sfd);
-        freeaddrinfo(result);
-        return -1;
-    }
-
-    stream_result = result;
-    stream_result_check = result_check;
-
-    return sfd;
-}
-
-/**
- * @brief Creates a new UDP/IP socket
- *
- * Returns an integer describing a DGRAM (UDP) socket. The socket is
- * automatically bound to some port.
- *
- * @param proto_osi3 is LIBSOCKET_IPv4 (AF_INET) or LIBSOCKET_IPv6 (AF_INET6).
- * @param flags may be the flags specified in socket(2), i.e. SOCK_NONBLOCK
- * and/or SOCK_CLOEXEC. More than one flags may be ORed. This argument is only
- * sensible on Linux >= 2.6.27!
- *
- * @return The socket file descriptor number, on error -1.
- *
- * To send and receive data with this socket use the functions explained below,
- * sendto_dgram_socket() and recvfrom_dgram_socket().
- */
-int create_dgram_socket(char proto_osi3, int flags) {
-#ifdef _WIN32
-    WSADATA d;
-    if (WSAStartup(MAKEWORD(2, 2), &d)) {
-      fprintf(stderr, "Failed to initialize.\n");
-    }
-#endif
-
-    int sfd;
-
-    if (proto_osi3 != LIBSOCKET_IPv4 && proto_osi3 != LIBSOCKET_IPv6) {
-        return -1;
-    }
-
-    switch (proto_osi3) {
-        case LIBSOCKET_IPv4:
-            sfd = socket(AF_INET, SOCK_DGRAM | flags, 0);
-            break;
-        case LIBSOCKET_IPv6:
-            sfd = socket(AF_INET6, SOCK_DGRAM | flags, 0);
-            break;
-        default:
-            return -1;
-    }
-
-    return sfd;
-}
-
-/**
- * @brief This function is the equivalent to `sendto(2)`
- *
- * @param sfd is the *Socket File Descriptor* (every socket file descriptor
- * argument in libsocket is called sfd) which you got from
- * create_dgram_socket(). *The usage with STREAM sockets is not recommended
- * and the result is undefined!*
- * @param buf is a pointer to some data.
- * @param size is the length of the buffer to which buf points.
- * @param host is the host to which we want to send the data. It's a string so
- * you may specify everything what's resolved by getaddrinfo(), i.e. an IP
- * ("193.21.34.21") or a hostname ("example.net").
- * @param service is the port on the remote host. Like in host, you may specify
- * the port either as number ("123") or as service string ("ntp", "http",
- * "gopher").
- * @param sendto_flags is available on all platforms. The value given here goes
- * directly to the internal sendto() call. The flags which may be specified
- * differ between the platforms.
- *
- * If it is not possible to send data at the moment, this call blocks excepted
- * you specified SOCK_NONBLOCK when creating the socket.
- *
- * @retval n *n* bytes of data could be sent.
- * @retval -1 Error.
- */
-ssize_t sendto_dgram_socket(int sfd, const void *buf, size_t size,
-                                 const char *host, const char *service,
-                                 int sendto_flags) {
-    struct sockaddr_storage oldsock;
-    struct addrinfo *result, *result_check, hint;
-    socklen_t oldsocklen = sizeof(struct sockaddr_storage);
-    int return_value;
-#ifdef VERBOSE
-    const char *errstring;
-#endif
-
-    if (sfd < 0) return -1;
-
-    if (buf == NULL) return -1;
-
-    if (size == 0) return 0;
-
-    if (host == NULL || service == NULL) return -1;
-
-    if (-1 == check_error(getsockname(sfd, (struct sockaddr *)&oldsock,
-                                      (socklen_t *)&oldsocklen)))
-        return -1;
-
-    memset(&hint, 0, sizeof(struct addrinfo));
-
-    /*
-     * This works for Linux > 2.6.32
-        socklen_t dom_len = sizeof(hint.ai_family);
-        getsockopt(sfd,SOL_SOCKET,SO_DOMAIN,&hint.ai_family,&dom_len);
-    */
-    hint.ai_family = oldsock.ss_family;
-    hint.ai_socktype = SOCK_DGRAM;
-
-    if (0 != (return_value = getaddrinfo(host, service, &hint, &result))) {
-        return -1;
-    }
-
-    for (result_check = result; result_check != NULL;
-         result_check = result_check->ai_next)  // go through the linked list of
-                                                // struct addrinfo elements
-    {
-        if (-1 != (return_value = sendto(
-                       sfd, buf, size, sendto_flags, result_check->ai_addr,
-                       result_check->ai_addrlen)))  // connected without error
-        {
-            break;  // Exit loop if send operation was successful
-        } else {
-            check_error(return_value);
-        }
-    }
-
-    freeaddrinfo(result);
-
-    return return_value;
-}
-
-/**
- * @brief Receive data from a UDP/IP socket
- *
- * Receives data like `recvfrom(2)`. Pointers may be `NULL`, then the
- * information (e.g. the source port) is lost (you may use NULL pointers if
- * you're not interested in some information)
- *
- * @param sfd The socket file descriptor.
- * @param buffer Where the data will be written
- * @param size The size of `buffer`
- * @param src_host Where the sending host's name/IP will be stored
- * @param src_host_len `src_host`'s length
- * @param src_service Where the port on remote side will be written to
- * @param src_service_len `src_service`'s length
- * @param recvfrom_flags Flags for `recvfrom(2)`
- * @param numeric `LIBSOCKET_NUMERIC` if you want the names to remain
- * unresolved.
- *
- * @retval n *n* bytes of data were received.
- * @retval 0 Peer sent EOF.
- * @retval <0 An error occurred.
- */
-ssize_t recvfrom_dgram_socket(int sfd, void *buffer, size_t size,
-                                   char *src_host, size_t src_host_len,
-                                   char *src_service, size_t src_service_len,
-                                   int recvfrom_flags, int numeric) {
-    struct sockaddr_storage client;
-
-#ifdef _TRADITIONAL_RDNS
-    struct sockaddr_storage oldsockaddr;
-    socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
-    struct hostent *he;
-    void *addrptr;
-    size_t addrlen;
-    uint16_t sport = 0;
-#endif
-
-    ssize_t bytes;
-
-#ifndef _TRADITIONAL_RDNS
-    int retval;
-#endif
-
-#ifdef VERBOSE
-    const char *errstr;
-#endif
-    if (sfd < 0) return -1;
-
-    if (buffer == NULL || size == 0)
-        return -1;
-    else
-        memset(buffer, 0, size);
-
-    if (src_host) memset(src_host, 0, src_host_len);
-    if (src_service) memset(src_service, 0, src_service_len);
-
-    socklen_t stor_addrlen = sizeof(struct sockaddr_storage);
-
-    if (-1 == check_error(bytes = recvfrom(sfd, buffer, size, recvfrom_flags,
-                                           (struct sockaddr *)&client,
-                                           &stor_addrlen)))
-        return -1;
-
-    if (src_host_len > 0 ||
-        src_service_len >
-            0)  // If one of the things is wanted. If you give a null pointer
-                // with a positive _len parameter, you won't get the address.
-    {
-        if (numeric == LIBSOCKET_NUMERIC) {
-            numeric = NI_NUMERICHOST | NI_NUMERICSERV;
-        }
-
-        // getnameinfo() doesn't work on FreeBSD (here)
-#ifndef _TRADITIONAL_RDNS
-        if (0 !=
-            (retval = getnameinfo(
-                 (struct sockaddr *)&client, sizeof(struct sockaddr_storage),
-                 src_host, src_host_len, src_service, src_service_len,
-                 numeric)))  // Write information to the provided memory
-        {
-#ifdef VERBOSE
-            errstr = gai_strerror(retval);
-            debug_write(errstr);
-#endif
-            return -1;
-        }
-#endif
-
-        // so use traditional methods
-#ifdef _TRADITIONAL_RDNS
-        if (-1 == check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
-                                          &oldsockaddrlen)))
-            return -1;
-
-        if (oldsockaddrlen >
-            sizeof(struct sockaddr_storage))  // If getsockname truncated the
-                                              // struct
-            return -1;
-
-        if (oldsockaddr.ss_family == AF_INET) {
-            addrptr = &(((struct sockaddr_in *)&client)->sin_addr);
-            addrlen = sizeof(struct in_addr);
-            sport = ntohs(((struct sockaddr_in *)&client)->sin_port);
-        } else if (oldsockaddr.ss_family == AF_INET6) {
-            addrptr = &(((struct sockaddr_in6 *)&client)->sin6_addr);
-            addrlen = sizeof(struct in6_addr);
-            sport = ntohs(((struct sockaddr_in6 *)&client)->sin6_port);
-        } else {
-#ifdef VERBOSE
-            debug_write("recvfrom_dgram_socket: Unknown address family");
-#endif
-        }
-
-        if (NULL ==
-            (he = gethostbyaddr(addrptr, addrlen, oldsockaddr.ss_family))) {
-            check_error(-1);
-            return -1;
-        }
-
-        strncpy(src_host, he->h_name, src_host_len);
-        snprintf(src_service, src_service_len, "%u", sport);
-#endif
-    }
-
-    return bytes;
-}
-
-/**
- * @brief Connect a UDP socket.
- *
- * If a datagram socket is connected, all data written to it (using `write(2)`)
- * is sent to the peer connected to and all data `read(2)` from it is data sent
- * by the peer. Usually used by clients only.
- *
- * @param sfd The socket file descriptor
- * @param host The host to connect to
- * @param service The port/service specifier
- *
- * @retval 0 Success
- * @retval -1 Error.
- */
-int connect_dgram_socket(int sfd, const char *host, const char *service) {
-    struct addrinfo *result, *result_check, hint;
-    struct sockaddr_storage oldsockaddr;
-    socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
-    int return_value;
-#ifdef VERBOSE
-    const char *errstring;
-#endif
-
-    if (sfd < 0) return -1;
-
-    if (host == NULL) {
-        // This does not work on FreeBSD systems. We pretend to disconnect the
-        // socket although we don't do so. This is not very severe for the
-        // application
-#ifndef __FreeBSD__
-        struct sockaddr deconnect;
-        memset(&deconnect, 0, sizeof(struct sockaddr));
-
-        deconnect.sa_family = AF_UNSPEC;
-
-        if (check_error(connect(sfd, &deconnect, sizeof(struct sockaddr))))
-            return -1;
-#endif
-        return 0;
-    }
-
-    if (-1 == check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
-                                      &oldsockaddrlen)))
-        return -1;
-
-    if (oldsockaddrlen >
-        sizeof(struct sockaddr_storage))  // If getsockname truncated the struct
-        return -1;
-
-    memset(&hint, 0, sizeof(struct addrinfo));
-
-    hint.ai_family = ((struct sockaddr_in *)&oldsockaddr)
-                         ->sin_family;  // AF_INET or AF_INET6 - offset is same
-                                        // at sockaddr_in and sockaddr_in6
-    hint.ai_socktype = SOCK_DGRAM;
-
-    if (0 != (return_value = getaddrinfo(host, service, &hint, &result))) {
-#ifdef VERBOSE
-        errstring = gai_strerror(return_value);
-        debug_write(errstring);
-#endif
-        return -1;
-    }
-
-    // As described in "The Linux Programming Interface", Michael Kerrisk 2010,
-    // chapter 59.11 (p. 1220ff)
-
-    for (result_check = result; result_check != NULL;
-         result_check = result_check->ai_next)  // go through the linked list of
-                                                // struct addrinfo elements
-    {
-        if (-1 != (return_value = connect(
-                       sfd, result_check->ai_addr,
-                       result_check->ai_addrlen)))  // connected without error
-        {
-            break;
-        } else {
-            check_error(return_value);
-        }
-    }
-
-    // We do now have a working (updated) socket connection to our target
-
-    if (result_check == NULL)  // or not?
-    {
-#ifdef VERBOSE
-        debug_write(
-            "connect_dgram_socket: Could not connect to any address!\n");
-#endif
-        freeaddrinfo(result);
-        return -1;
-    }
-
-    freeaddrinfo(result);
-
-    return 0;
-}
-
-/**
- * @brief Close a socket.
- *
- * This function closes a socket. You may also use `close(2)`.
- *
- * @param sfd The file descriptor
- *
- * @retval 0 Closed socket successfully
- * @retval -1 Socket was already closed (other errors are very unlikely to
- * occur)
- */
-int destroy_socket(int sfd) {
-    if (sfd < 0) return -1;
-
-    if (-1 == check_error(close_socket(sfd))) return -1;
-
-    return 0;
-}
-
-/**
- * @brief Perform a `shutdown(2)` call on a socket
- *
- * If you're done with writing or reading from a socket
- * you may signalize this to the OS and/or the peer. For
- * example, shutting down a socket for writing sends
- * the peer an EOF signal.
- *
- * @param sfd The socket
- * @param method `LIBSOCKET_READ` or `LIBSOCKET_WRITE` or the combination via
- * `|`
- *
- * @retval 0 Everything's fine.
- * @retval -1 Something went wrong, e.g. the socket was closed, the file
- * descriptor is invalid etc.
- */
-int shutdown_stream_socket(int sfd, int method) {
-    if (sfd < 0) return -1;
-
-    if ((method != LIBSOCKET_READ) && (method != LIBSOCKET_WRITE) &&
-        (method != (LIBSOCKET_READ | LIBSOCKET_WRITE)))
-        return -1;
-
-    if (method & LIBSOCKET_READ)  // READ is set (0001 && 0001 => 0001 => true)
-    {
-        if (-1 == check_error(shutdown(sfd, SHUT_RD))) return -1;
-    }
-
-    if (method &
-        LIBSOCKET_WRITE)  // WRITE is set (0010 && 0010 => 0010 => true)
-    {
-        if (-1 == check_error(shutdown(sfd, SHUT_WR))) return -1;
-    }
-
-#ifdef _WIN32
-    WSACleanup(); // required to clear up socket memory on Windows
-#endif
-
-    return 0;
-}
-
-/*
- * Server part
+ * The choice of using a struct here instead of using definitions like in the original code
+ * was primarily for scalability and long term memory usage reduction. A struct allocates 4 bytes
+ * on creation but since the code uses quite a few flags, I figured it'd be best to use bitflags
+ * instead of ints. Each int used for this would be memory that could be used elsewhere. I'd rather 
+ * allocate 4 bytes for a single struct if it gives me the freedom to add more flags in the future 
+ * when needed. It also forces me to limit my flags to 8 bit increments.
  *
  */
 
-/**
- * @brief Create a TCP or UDP server socket
- *
- * To accept connections from clients via TCP or receive datagrams via UDP, you
- * need to create a server socket. This function creates such a socket and
- * `bind(2)`s it to the specified address. If `proto_osi4` is `LIBSOCKET_TCP`,
- * `listen(2)` is called, too.
- *
- * @param bind_addr Address to bind to. If you want to bind to every address use
- * "0.0.0.0" or "::" (IPv6 wildcard)
- * @param bind_port The port to bind to. If you write a webserver, this will be
- * "http" or "80" or "https" or "443".
- * @param proto_osi4 Either `LIBSOCKET_TCP` or `LIBSOCKET_UDP`. Server sockets
- * in TCP and UDP differ only in that TCP sockets need a call to `listen(2)`
- * @param proto_osi3 Either `LIBSOCKET_IPv4`, `LIBSOCKET_IPv6` or
- * `LIBSOCKET_BOTH`; latter means that the DNS resolver should decide.
- * @param flags The `flags` argument is passed ORed to the `type` argument of
- * `socket(2)`; everything other than 0 does not make sense on other OSes than
- * Linux.
- *
- * @retval >0 A working passive socket. Call `accept_stream_socket()` next.
- * @retval <0 Something went wrong; for example, the addresses where garbage or
- * the port was not free.
- */
-//		              Bind address	   Port TCP/UDP IPv4/6
-int create_server_socket(const char *bind_addr, const char *bind_port,
-                              char proto_osi4, char proto_osi3, int flags) {
-    int sfd, domain, type, retval;
-    struct addrinfo *result, *result_check, hints;
-#ifdef VERBOSE
-    const char *errstr;
-#endif
+typedef struct Flag {
+  unsigned int connected : 1;
+  unsigned int kill : 1;
+  unsigned int error : 1;
+  unsigned int protocol : 1;
+  unsigned int ipv4 : 1;
+  unsigned int ipv6 : 1;
+  unsigned int read : 1;
+  unsigned int write : 1;
+  int step;
+  int accept;
+} Flag;
 
-    // if ( flags != SOCK_NONBLOCK && flags != SOCK_CLOEXEC && flags !=
-    // (SOCK_CLOEXEC|SOCK_NONBLOCK) && flags != 0 ) 	return -1;
+typedef struct Error {
+  int code;
+  char* message;
+  char* trigger;
+} Error;
 
-    if (bind_addr == NULL || bind_port == NULL) return -1;
+/* static variables go here */
+static Flag hook;
+static Error error;
 
-    switch (proto_osi4) {
-        case LIBSOCKET_TCP:
-            type = SOCK_STREAM;
-            break;
-        case LIBSOCKET_UDP:
-            type = SOCK_DGRAM;
-            break;
-        default:
-            return -1;
-    }
-    switch (proto_osi3) {
-        case LIBSOCKET_IPv4:
-            domain = AF_INET;
-            break;
-        case LIBSOCKET_IPv6:
-            domain = AF_INET6;
-            break;
-        case LIBSOCKET_BOTH:
-            domain = AF_UNSPEC;
-            break;
-        default:
-            return -1;
-    }
+/* set these as external variables so they can be set and travel between steps */
+static struct addrinfo *result, *result_check;
+static int iter, numeric;
 
-    memset(&hints, 0, sizeof(struct addrinfo));
+/* define various functions here */
+int c_open(int sfd, const char* host, const char* service);
+int c_close(int sfd);
+int c_shutdown(int sfd);
+int c_tick();
+Error c_error();
 
-    hints.ai_socktype = type;
-    hints.ai_family = domain;
-    hints.ai_flags = AI_PASSIVE;
-
-    if (0 != (retval = getaddrinfo(bind_addr, bind_port, &hints, &result))) {
-#ifdef VERBOSE
-        errstr = gai_strerror(retval);
-        debug_write(errstr);
-#endif
-        return -1;
-    }
-
-    // As described in "The Linux Programming Interface", Michael Kerrisk 2010,
-    // chapter 59.11 (p. 1220ff)
-    for (result_check = result; result_check != NULL;
-         result_check = result_check->ai_next)  // go through the linked list of
-                                                // struct addrinfo elements
-    {
-        sfd = socket(result_check->ai_family, result_check->ai_socktype | flags,
-                     result_check->ai_protocol);
-
-        if (sfd < 0)  // Error at socket()!!!
-            continue;
-
-        retval = bind(sfd, result_check->ai_addr,
-                      (socklen_t)result_check->ai_addrlen);
-
-        if (retval != 0)  // Error at bind()!!!
-        {
-            close_socket(sfd);
-            continue;
-        }
-
-        if (type == LIBSOCKET_TCP) retval = listen(sfd, LIBSOCKET_BACKLOG);
-
-        if (retval == 0)  // If we came until here, there wasn't an error
-                          // anywhere. It is safe to cancel the loop here
-            break;
-        else
-            close_socket(sfd);
-    }
-
-    if (result_check == NULL) {
-#ifdef VERBOSE
-        debug_write(
-            "create_server_socket: Could not bind to any address!\n");
-#endif
-        freeaddrinfo(result);
-        return -1;
-    }
-
-    // We do now have a working socket on which we may call accept()
-
-    freeaddrinfo(result);
-
-    return sfd;
-}
-
-/**
- * @brief Accept a connection attempt on a server socket.
- *
- * This function accepts an incoming connection on a server socket.
- *
- * (the `src_*` arguments may be `NULL`, in which case the address is not
- * stored)
- *
- * @param sfd The server socket
- * @param src_host Buffer where the client's address is copied to
- * @param src_host_len `src_host`'s length. If the hostname is longer than this,
- * it is truncated.
- * @param src_service Buffer in which the client's port is stored
- * @param src_service_len Its size. If shorter than the hostname it gets
- * truncated.
- * @param flags May be `LIBSOCKET_NUMERIC`; then there is no rDNS lookup and the
- * IP and port number are stored as-is.
- * @param accept_flags Flags for `accept4(2)` (which is only used on Linux)
- *
- * @retval >0 A socket file descriptor which can be used to talk to the client
- * @retval <0 Error.
- */
-//	 		       Socket    Src string      Src str len Src service
-// Src service len         NUMERIC?
-int accept_stream_socket(int sfd, char *src_host, size_t src_host_len,
-                              char *src_service, size_t src_service_len,
-                              int flags, int accept_flags) {
-    struct sockaddr_storage client_info;
-    int client_sfd;
-
-#ifndef _TRADITIONAL_RDNS
-    int retval;
-#endif
-
-#ifdef _TRADITIONAL_RDNS
-    struct sockaddr_storage oldsockaddr;
-    socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
-    struct hostent *he;
-    void *addrptr;
-    size_t in_addrlen;
-    uint16_t sport = 0;
-#endif
-
-#ifdef VERBOSE
-    const char *errstr;
-#endif
-    socklen_t addrlen = sizeof(struct sockaddr_storage);
-
-    // Portable behavior
-//#if LIBSOCKET_LINUX
+/* To solve the accept4 Warning */
 #ifdef linux
-    if (-1 ==
-        check_error((client_sfd = accept4(sfd, (struct sockaddr *)&client_info,
-                                          &addrlen, accept_flags))))  // blocks
-        return -1;
+#ifndef __USE_GNU
+#define __USE_GNU
+extern int accept4(int sfd, struct sockaddr * addr, socklen_t * addrlen, int flags);
+#endif
+#endif
+
+static inline int check_error(int sfd) {
+  if (sfd < 0) {
+    hook.error = 1;
+    return -1;
+  }
+  return sfd;
+}
+
+int c_start(const char *bind_addr, const char *bind_port,  int flags) {
+  int sfd, domain, type, retval;
+  struct addrinfo hints;
+  error.trigger = "start";
+
+#ifdef _WIN32
+  WSADATA d;
+#endif
+
+  switch (hook.step) {
+    case 0:
+#ifdef _WIN32
+      return check_error(WSAStartup(MAKEWORD(2, 2), &d));
+#endif
+    case 1:
+      /* check if address and port are configured correctly */
+      if (hook.error == 0) 
+        return check_error(bind_addr == NULL || bind_port == NULL);
+    case 2:
+      /* check what protocol to use */
+      if (hook.protocol == 0) type = SOCK_DGRAM;
+      else type = SOCK_STREAM;
+      break;
+    case 3:
+      /* allocate memory for socket */
+      memset(&hints, 0, sizeof(struct addrinfo));
+      break;
+    case 4:
+      /* fill in hints */
+      hints.ai_socktype = type;
+      hints.ai_family = domain;
+      hints.ai_flags = AI_PASSIVE;
+      break;
+    case 5:
+      /* make sure the return value is completely empty */
+      return check_error(retval = getaddrinfo(bind_addr, bind_port, &hints, &result));
+    case 6:
+      if (hook.error == 0)
+        result_check = result;
+      break;
+    case 7:
+      /* go through the linked list of struct addrinfo elements */
+      if (result_check != NULL) 
+        result_check = result_check->ai_next;
+      
+      sfd = check_error(socket(result_check->ai_family, 
+                               result_check->ai_socktype | flags, result_check->ai_protocol));
+      if (hook.error == 0)
+        retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
+
+      if (type == SOCK_STREAM) retval = check_error(listen(sfd, LIBSOCKET_BACKLOG));
+
+      if (retval != 0 && hook.error == 0) {
+        c_close(sfd);
+      }
+      break;
+    case 8:
+      /* final check */
+      if (result_check == NULL) {
+        freeaddrinfo(result);
+        hook.error = 1;
+      }
+      break;
+    case 9:
+      /* we have socket creation */
+      freeaddrinfo(result);
+      hook.connected = 1;
+      hook.step = 0;
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  return sfd;
+}
+
+static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
+                      char *src_service, size_t src_service_len,
+                      int flags) {
+  struct sockaddr_storage client_info;
+  int client_sfd;
+  socklen_t addrlen;
+  error.trigger = "accept_tcp";
+
+  switch (hook.step) {
+    case 0:
+      addrlen = sizeof(struct sockaddr_storage);
+#ifdef linux
+      return check_error(client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, hook.accept));
 #else
-    if (-1 ==
-        check_error((client_sfd = accept(sfd, (struct sockaddr *)&client_info,
-                                         &addrlen))))  // blocks
-        return -1;
+      return check_error(client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen));
 #endif
-
-    if (src_host_len > 0 ||
-        src_service_len >
-            0)  // If one of the things is wanted. If you give a null pointer
-                // with a positive _len parameter, you won't get the address.
-    {
-        if (flags == LIBSOCKET_NUMERIC) {
-            flags = NI_NUMERICHOST | NI_NUMERICSERV;
-        } else {
-            flags = 0;  // To prevent errors: Unknown flags are ignored
-        }
-
-#ifndef _TRADITIONAL_RDNS
-        if (0 != (retval = getnameinfo(
-                      (struct sockaddr *)&client_info,
-                      sizeof(struct sockaddr_storage), src_host, src_host_len,
-                      src_service, src_service_len,
-                      flags)))  // Write information to the provided memory
-        {
-#ifdef VERBOSE
-            errstr = gai_strerror(retval);
-            debug_write(errstr);
-#endif
-        }
-#endif
-
-#ifdef _TRADITIONAL_RDNS
-        if (-1 == check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
-                                          &oldsockaddrlen)))
-            return -1;
-
-        if (oldsockaddrlen >
-            sizeof(struct sockaddr_storage))  // If getsockname truncated the
-                                              // struct
-            return -1;
-
-        if (oldsockaddr.ss_family == AF_INET) {
-            addrptr = &(((struct sockaddr_in *)&client_info)->sin_addr);
-            in_addrlen = sizeof(struct in_addr);
-            sport = ntohs(((struct sockaddr_in *)&client_info)->sin_port);
-        } else if (oldsockaddr.ss_family == AF_INET6) {
-            addrptr = &(((struct sockaddr_in6 *)&client_info)->sin6_addr);
-            in_addrlen = sizeof(struct in6_addr);
-            sport = ntohs(((struct sockaddr_in6 *)&client_info)->sin6_port);
-        } else {
-            return -1;
-        }
-
-        if (NULL ==
-            (he = gethostbyaddr(addrptr, in_addrlen, oldsockaddr.ss_family))) {
-            check_error(-1);
-            // Don't return with error on name resolution failure
-        }
-
-        strncpy(src_host, he->h_name, src_host_len);
-        snprintf(src_service, src_service_len, "%u", sport);
-#endif
-    }
-
-    return client_sfd;
+      break;
+    case 1:
+      if (src_host_len > 0 ||
+          src_service_len > 0)  // If one of the things is wanted. If you give a null pointer
+                                // with a positive _len parameter, you won't get the address.
+      {
+          if (flags == LIBSOCKET_NUMERIC) {
+              flags = NI_NUMERICHOST | NI_NUMERICSERV;
+          } else {
+              flags = 0;  // To prevent errors: Unknown flags are ignored
+          }
+      }
+      hook.step = 0;
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  return client_sfd;
 }
 
-/**
- * @brief Look up which address families a host supports.
- *
- * If you want to send a datagram to a host but you don't know
- * if it supports IPv4 or IPv6, use this function. It returns
- * the address family returned by a DNS lookup. On most systems IPv6
- * is the preferred address family.
- *
- * @param hostname The hostname of the host you want to look up.
- *
- * @retval LIBSOCKET_IPv4 Host supports only IPv4
- * @retval LIBSOCKET_IPv6 Host supports IPv6 (usually it supports IPv4 then,
- * too)
- * @retval <0 Error.
- */
-int get_address_family(const char *hostname) {
-    int return_value;
-    struct addrinfo hint, *result;
-#ifdef VERBOSE
-    const char *errstring;
-#endif
-    int af;
+ssize_t c_send(int sfd, const void* buf, size_t size, const char* host, 
+               const char* service, int sendto_flags) {
+  struct sockaddr_storage oldsock;
+  struct addrinfo hint;
+  socklen_t oldsocklen;
+  error.trigger = "send";
 
-    if (hostname == NULL) return -1;
-
-    memset(&hint, 0, sizeof hint);
-
-    hint.ai_family = AF_UNSPEC;
-
-    if (0 != (return_value = getaddrinfo(hostname, "0", &hint, &result))) {
-        return -1;
-    }
-
-    if (result == NULL) return -1;
-
-    if (result->ai_family == AF_INET) {
-        af = LIBSOCKET_IPv4;
-    } else if (result->ai_family == AF_INET6) {
-        af = LIBSOCKET_IPv6;
-    } else {
-        af = -1;
-    }
-
-    return af;
-}
-
-/**
- * @brief a wrapper function to help DragonRuby obtain the connect() result.
- *
- * This function simply grabs the connect() result and then passes it to DragonRuby so that 
- * socket.rb can process it.
- *
- * @retval connect() result
- *
- */
-
-int get_connection_result() {
-  return connection_result;
-}
-
-/**
- * @brief a wrapper function to help DragonRuby obtain error codes when working with sockets.
- *
- * This function simply grabs the system error code and then passes it to DragonRuby so that 
- * error.rb can process it.
- *
- * @retval system error code
- *
- */
-
-int get_error_code() {
-  int ret = 0;
-#if defined(_WIN32)
-    ret = WSAGetLastError();
-#elif defined(linux) || defined(__APPLE__)
-    ret = errno;
-#endif
-  return ret;
-}
-
-/**
- * @brief a wrapper function to help DragonRuby close a socket.
- *
- * This function simply closes the socket when called in code here or through destroy_socket.
- *
- */
-
-static inline int close_socket(int socket) {
-#if defined(_WIN32)
-  closesocket(socket);
-#elif defined(linux) || defined(__APPLE__)
-  close(socket);
-#endif
-
-  if (stream_result_check != NULL) 
-    freeaddrinfo(stream_result);
+  switch (hook.step) {
+    case 0:
+      oldsocklen = sizeof(struct sockaddr_storage);
+      return check_error((sfd < 0) || (buf == NULL || host == NULL || service == NULL));
+    case 1:
+      return check_error(getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen));
+    case 2:
+      memset(&hint, 0, sizeof(struct addrinfo));
+      break;
+    case 3:
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  
   return 0;
 }
 
-/**
- * @brief Create a datagram socket and join to the multicast group `address`.
- *
- * This function creates a multicast socket bound to `address`. The only option
- * set is the `IP_MULTICAST_IF` (`IPV6_MULTICAST_IF`) option to avoid an
- * explicit routing entry for the multicast address.
- *
- * An option you want to set very likely is `IP_MULTICAST_LOOP`. Refer to
- * `ip(7)` respectively `ipv6(7)` for `setsockopt()` options; for example:
- *
- *     int c = 0;
- *     setsockopt(sfd,IPPROTO_IP,IP_MULTICAST_LOOP,&c,4);
- *
- * The group address and port is also used as arguments to `bind(2)`. After
- * creating this socket, you may use the usual I/O functions on it, i.e.
- * sendto_dgram_socket and recvfrom_dgram_socket.
- *
- * @param group Group address. This address is also used to bind the socket
- * @param port Multicast port.
- * @param local For IPv4 multicast groups: The address of the interface to be
- * used. Ignored for IPv6, NULL for kernel's choice
- *
- * @retval <0 Error (Check errno or use `LIBSOCKET_VERBOSE`)
- * @retval >=0 A valid file descriptor.
- *
- */
-#ifdef linux
-int create_multicast_socket(const char *group, const char *port,
-                            const char *if_name) {
-    int sfd, return_value;
-    struct sockaddr maddr, localif;
-    struct addrinfo hints, *result;
-    struct ip_mreqn mreq4;
-    struct ipv6_mreq mreq6;
-    struct in_addr any;
-    struct ifreq interface;
+ssize_t c_receive(int sfd, void* buffer, size_t size,
+                  char* src_host, size_t src_host_len,
+                  char* src_service, size_t src_service_len,
+                  int recvfrom_flags) {
+  ssize_t bytes;
+  error.trigger = "receive";
 
-    memset(&maddr, 0, sizeof(maddr));
-    memset(&localif, 0, sizeof(localif));
-    memset(&mreq4, 0, sizeof(mreq4));
-    memset(&mreq6, 0, sizeof(mreq6));
-    memset(&hints, 0, sizeof(hints));
-    memset(&interface, 0, sizeof(interface));
+  switch (hook.step) {
+    case 0:
+      /* check if using TCP and if it can accept data */
+      if (hook.protocol != 0) 
+        return check_error(accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags));
+      break;
+    case 1:
+      return check_error(sfd);
+    case 2:
+      return check_error(buffer == NULL || size == 0);
+    case 3:
+      memset(buffer, 0, size);
+      break;
+    case 4:
+      iter = strlen(src_host);
+      iter--;
+      break;
+    case 5:
+      if ((src_host[iter] > -1 && src_host[iter] < 10) || (src_host[iter] == '.')) {
+        numeric++;
+      }
+      else
+        numeric = -1;
+      break;
+    case 6:
+      if (numeric > 0)
+        numeric = NI_NUMERICHOST | NI_NUMERICSERV;
+      break;
+    case 7:
+      if (src_host)
+        memset(src_host, 0, src_host_len);
+      break;
+    case 8:
+      if (src_service)
+        memset(src_service, 0, src_service_len);
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  return bytes;
+}
 
-    if (-1 == check_error(sfd = create_server_socket(
-                              group, port, LIBSOCKET_UDP, LIBSOCKET_BOTH, 0))) {
-        return -1;
-    }
-
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_family = AF_UNSPEC;
-
-    if (0 != (return_value = getaddrinfo(group, port, &hints, &result))) {
-        int errno_saved = errno;
-#ifdef VERBOSE
-        const char *errstring = gai_strerror(return_value);
-        debug_write(errstring);
-#endif
-        close_socket(sfd);
+int c_open(int sfd, const char* host, const char *service) {
+  struct addrinfo hint;
+  struct sockaddr_storage oldsockaddr;
+  socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
+  int return_value;
+  
+  switch (hook.step) {
+    case 0:
+      return check_error(sfd);
+    case 1:
+    /* if (host == NULL) return 0;
+        break; */
+      return check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
+                                     &oldsockaddrlen));
+    case 2:
+      if (oldsockaddrlen > sizeof(struct sockaddr_storage))
+        hook.error = 1;
+      break;
+    case 3:
+      memset(&hint, 0, sizeof(struct addrinfo));
+      break;
+    case 4:
+      hint.ai_family = ((struct sockaddr_in *)&oldsockaddr)->sin_family;
+      hint.ai_socktype = SOCK_DGRAM;
+      return_value = getaddrinfo(host, service, &hint, &result);
+      return check_error(return_value);
+    case 5:
+      result_check = result;
+      if (result_check != NULL)
+        result_check = result_check->ai_next;
+      if (-1 != (return_value = connect(
+        sfd, result_check->ai_addr,
+        result_check->ai_addrlen)))
+        break;
+      else
+        return check_error(return_value);
+    case 6:
+      if (result_check == NULL) {
+        hook.error = 1;
         freeaddrinfo(result);
-        errno = errno_saved;
-
-        return -1;
-    }
-
-    if (result->ai_family == AF_INET) {
-        // Result is IPv4 address.
-        mreq4.imr_multiaddr = ((struct sockaddr_in *)result->ai_addr)->sin_addr;
-
-        if (if_name == NULL) {
-            mreq4.imr_ifindex = 0;
-            any.s_addr = INADDR_ANY;
-            mreq4.imr_address = any;
-        } else {
-            memcpy(interface.ifr_name, if_name,
-                   strlen(if_name) > IFNAMSIZ ? IFNAMSIZ : strlen(if_name));
-
-            if (-1 == check_error(ioctl(sfd, SIOCGIFINDEX, &interface))) {
-                int errno_saved = errno;
-                close_socket(sfd);
-                freeaddrinfo(result);
-                errno = errno_saved;
-                return -1;
-            }
-
-            mreq4.imr_ifindex = interface.ifr_ifindex;
-        }
-
-        if (-1 == check_error(setsockopt(sfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                                         &mreq4, sizeof(struct ip_mreqn)))) {
-            int errno_saved = errno;
-            close_socket(sfd);
-            freeaddrinfo(result);
-            errno = errno_saved;
-            return -1;
-        }
-        if (-1 == check_error(setsockopt(sfd, IPPROTO_IP, IP_MULTICAST_IF,
-                                         &mreq4, sizeof(struct ip_mreqn)))) {
-            int errno_saved = errno;
-            close_socket(sfd);
-            freeaddrinfo(result);
-            errno = errno_saved;
-            return -1;
-        }
-
-        // Setup finished.
-        //
-    } else if (result->ai_family == AF_INET6) {
-        mreq6.ipv6mr_multiaddr =
-            ((struct sockaddr_in6 *)result->ai_addr)->sin6_addr;
-        mreq6.ipv6mr_interface = 0;
-
-        if (if_name == NULL)
-            mreq6.ipv6mr_interface = 0;
-        else {
-            memcpy(interface.ifr_name, if_name,
-                   strlen(if_name) > IFNAMSIZ ? IFNAMSIZ : strlen(if_name));
-
-            if (-1 == check_error(ioctl(sfd, SIOCGIFINDEX, &interface))) {
-                int errno_saved = errno;
-                close_socket(sfd);
-                freeaddrinfo(result);
-                errno = errno_saved;
-                return -1;
-            }
-
-            mreq6.ipv6mr_interface = interface.ifr_ifindex;
-        }
-
-        if (-1 == check_error(setsockopt(sfd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP,
-                                         &mreq6, sizeof(struct ipv6_mreq)))) {
-            int errno_saved = errno;
-            close_socket(sfd);
-            freeaddrinfo(result);
-            errno = errno_saved;
-            return -1;
-        }
-        if (-1 == check_error(setsockopt(sfd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-                                         &mreq6.ipv6mr_interface,
-                                         sizeof(mreq6.ipv6mr_interface)))) {
-            int errno_saved = errno;
-            close_socket(sfd);
-            freeaddrinfo(result);
-            errno = errno_saved;
-            return -1;
-        }
-    }
-
-    freeaddrinfo(result);
-    return sfd;
+      }
+      break;
+    case 7:
+      freeaddrinfo(result);
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  return 0;
 }
 
-/**
- * @brief a wrapper function to help DragonRuby obtain SOCK_NONBLOCK flag for Linux.
- *
- * This function simply grabs the SOCK_NONBLOCK flag and then passes it to DragonRuby so that 
- * socket.rb can process it.
- *
- * @retval SOCK_NONBLOCK
- *
- */
+int c_close(int sfd) {
+  /* since this process can happen during any other process, always return step back to original state */
+  int old_step = hook.step;
+  error.trigger = "close";
 
-signed int get_nonblock() {
-  return (sock_flags |= SOCK_NONBLOCK);
-}
-
-
+  hook.step = 0;
+  switch (hook.step) {
+    case 0:
+      return check_error(sfd);
+    case 1:
+#if defined(_WIN32)
+      return check_error(closesocket(sfd));
+#elif defined(linux) || defined(__APPLE__)
+      return check_error(close(sfd));
 #endif
+      break;
+    case 2:
+      return check_error(result_check == NULL);
+    case 3:
+      freeaddrinfo(result);
+      hook.step = old_step;
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  return 0;
+}
 
-/**
- * @}
- */
+int c_shutdown(int sfd) {
+  error.trigger = "shutdown";
 
-#undef debug_write
+  switch (hook.step) {
+    case 0:
+      return check_error(sfd);
+    case 1:
+      if (hook.read == 1)
+        return check_error(shutdown(sfd, SHUT_RD));
+      break;
+    case 2:
+      if (hook.write == 1)
+        return check_error(shutdown(sfd, SHUT_WR));
+      break;
+    case 3:
+#ifdef _WIN32
+      return check_error(WSACleanup());
+#endif
+      break;
+    default:
+      hook.step = 0;
+      hook.error = 1;
+      break;
+  }
+  return 0;
+}
+
+int c_tick() {
+  char buf[256];
+  char* str;
+
+  /* check if receive needs to move to next step or there's no error */
+  if ((iter == 0 && hook.step == 5 && strcmp(error.trigger, "receive")) ||
+      (hook.error = 0)) {
+    hook.step++;
+  } 
+
+  /* check if error is passed and then send that info to DragonRuby */
+  if (hook.error == 1) {
+#if defined(_WIN32)
+    error.code = WSAGetLastError();
+    sprintf(str, "%d", error.code);
+    str = strcpy(": ", str);
+    str = strcpy(error.trigger, str);
+    str = strcpy("- ", str);
+    FormatMessage(
+      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+      str, 0, 0, NULL, 64, NULL);
+#else
+    error.code = errno;
+    sprintf(str, "%d", error.code);
+    str = strcpy(": ", str);
+    str = strcpy(error.trigger, str);
+    str = strcpy("- ", str);
+    str = strcpy(strerror(errno), str);
+#endif
+    error.message = str;
+  }
+  return 0;
+}
+
+Error c_error() {
+  return error;
+}
+
+Flag c_hook() {
+  return hook;
+}

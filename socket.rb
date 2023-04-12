@@ -34,6 +34,7 @@
 #		SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 $gtk.ffi_misc.gtk_dlopen("libsocket")
+include FFI::SOCKET
 
 class Socket
   attr_accessor :socket, :config, :error, :c_api
@@ -76,8 +77,8 @@ class Socket
       receive_flags: 0, # flags to better help a socket interact with this socket 
       message_length: 80
     }
-    self.error ||= FFI::SOCKET.get_error
-    self.c_api ||= FFI::SOCKET.get_hook
+    self.error ||= c_error
+    self.c_api ||= c_hook
   end
 
   # place this after running Socket.new to start a socket connection but not actually connect yet
@@ -87,28 +88,28 @@ class Socket
   def start address, port
     @config.host = address
     @config.port = port
-    @socket = FFI::SOCKET.init_server @config.host, @config.port, @config.flags
+    @socket = c_start @config.host, @config.port, @config.flags
   end
 
   # to start talking and listening, first make sure this is active
   #
   # no params
   def open
-    FFI::SOCKET.init_server @socket
+    c_open @socket
   end
 
   # what you do when you are done connecting but may want to start up later
   #
   # no params
   def close
-    FFI::SOCKET.close_socket @socket
+    c_close @socket
   end
 
   # send a message over the socket
   #
   # @param (string) message - whatever you want the other instance to receive
   def send message
-    FFI::SOCKET.send_to_socket @socket, message, @config.message_length, @config.host, @config.port, @config.flags
+    c_send @socket, message, @config.message_length, @config.host, @config.port, @config.flags
   end
 
   # receive a message from the other socket
@@ -116,7 +117,7 @@ class Socket
   # @param (string) sender_address - IP address or URL that you want to listen for
   # @param (string) sender_port - what port you want to hear from them on
   def receive sender_address, sender_port
-    FFI::SOCKET.receive_from_socket @socket, "", @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
+    c_receive @socket, "", @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
   end
   # where sockets go to die and never return
   # if you need to reconnect, use the close and open functions instead
@@ -125,13 +126,13 @@ class Socket
   #       possible memory leak in larger scenarios when opening multiple sockets. The C-API doesn't handle 
   #       that directly due to this being an extension
   def shutdown
-    FFI::SOCKET.kill_server @socket
+    c_shutdown @socket
   end
 
   # where the scary C-API tick method lives; it's not tied directly to DR tick_count
   # due to not all processes in a network situation always finishing on time
   # nothing it does should be touched by you unless you know what you're doing
   def tick
-    FFI::SOCKET.c_tick
+    c_tick
   end
 end
