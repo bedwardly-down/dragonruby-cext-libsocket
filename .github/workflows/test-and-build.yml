@@ -1,4 +1,4 @@
-name: Test and Build
+name: Test and Build (All Platforms)
 
 on:
   workflow_dispatch:
@@ -17,25 +17,7 @@ jobs:
           - macos-12
         dr_version:
           - '4.7'
-    runs-on: ${{ matrix.runner }}
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v3
-      - name: Determine DragonRuby platform
-        id: determine_dr_platform
-        run: echo "dr_platform=$(scripts/dr_platform.sh)" >> "$GITHUB_OUTPUT"
-      - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh ${{ matrix.dr_version }}
-      - name: Windows build settings
-        run: echo "MINGW_DIR=/C/ProgramData/chocolatey/lib/mingw/tools/install/mingw64" >> $GITHUB_ENV
-        if: runner.os == 'Windows'
-      - name: Build extension
-        run: scripts/build.sh $TESTGAME_DIR/native/${{ steps.determine_dr_platform.outputs.dr_platform }}
-      - name: Run tests
-        run: .github/workflows/run_tests.sh
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dragonruby-cext-libsocket-${{ steps.determine_dr_platform.outputs.dr_platform }}
-          path: ${{ env.TESTGAME_DIR }}/native/${{ steps.determine_dr_platform.outputs.dr_platform }}/*
+    uses: ./.github/workflows/test-and-build-for-one-platform.yml
+    with:
+      runner: ${{ matrix.runner }}
+      dr_version: ${{ matrix.dr_version }}
