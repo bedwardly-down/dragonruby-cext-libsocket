@@ -28,11 +28,13 @@ env:
   TESTGAME_DIR: .github/workflows/testgame
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ${{ inputs.runner }}
     defaults:
       run:
         shell: bash
+    outputs:
+      dr_platform: ${{ steps.determine_dr_platform.outputs.dr_platform }}
     steps:
       - uses: actions/checkout@v3
       - name: Determine DragonRuby platform
@@ -45,9 +47,25 @@ jobs:
         if: runner.os == 'Windows'
       - name: Build extension
         run: scripts/build.sh $TESTGAME_DIR/native/${{ steps.determine_dr_platform.outputs.dr_platform }}
-      - name: Run tests
-        run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
         with:
           name: dragonruby-cext-libsocket-${{ steps.determine_dr_platform.outputs.dr_platform }}
           path: ${{ env.TESTGAME_DIR }}/native/${{ steps.determine_dr_platform.outputs.dr_platform }}/*
+  test:
+    needs:
+      - build
+    runs-on: ${{ inputs.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download dragonruby
+        run: .github/workflows/download_dr_for_ci.sh ${{ inputs.dr_version }}
+      - name: Download extension
+        uses: actions/download-artifact@v3
+        with:
+          name: dragonruby-cext-libsocket-${{ needs.build.outputs.dr_platform }}
+          path: ${{ env.TESTGAME_DIR }}/native/${{ needs.build.outputs.dr_platform }}
+      - name: Run tests
+        run: .github/workflows/run_tests.sh
