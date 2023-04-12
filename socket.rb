@@ -75,7 +75,7 @@ class Socket
       #       https://www.man7.org/linux/man-pages/man2/socket.2.html
       flags: 0, # flags for this socket
       receive_flags: 0, # flags to better help a socket interact with this socket 
-      message_length: 80
+      message_length: 80 # if you need to support more than 80 characters for the send function, increase this value. It may cause latency issues if you set it too high
     }
     self.error ||= c_error
     self.c_api ||= c_hook
@@ -119,6 +119,7 @@ class Socket
   def receive sender_address, sender_port
     c_receive @socket, "", @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
   end
+
   # where sockets go to die and never return
   # if you need to reconnect, use the close and open functions instead
   #
