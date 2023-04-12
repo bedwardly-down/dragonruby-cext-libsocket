@@ -28,13 +28,13 @@ case $platform in
           -o $target_dir/libsocket.dylib \
           $source_entrypoint;;
   windows-amd64)
-    if [ -z "$SYSROOT" ]; then
-      echo "Please set the SYSROOT environment variable when building for Windows."
+    if [ -z "$MINGW_DIR" ]; then
+      echo "Please set the MINGW_DIR environment variable when building for Windows."
       exit 1
     fi
 
     clang -shared \
-          --sysroot=$SYSROOT \
+          --sysroot=$MINGW_DIR \
           --target=x86_64-w64-mingw32 \
           -fuse-ld=lld \
           -isystem include -I $dr_headers -lws2_32 \
