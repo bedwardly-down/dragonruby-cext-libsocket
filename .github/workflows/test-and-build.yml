@@ -23,28 +23,19 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v3
+      - name: Determine DragonRuby platform
+        id: determine_dr_platform
+        run: echo "dr_platform=$(scripts/dr_platform.sh)" >> "$GITHUB_OUTPUT"
       - name: Download dragonruby
         run: .github/workflows/download_dr_for_ci.sh ${{ matrix.dr_version }}
       - name: Windows build settings
         run: echo "MINGW_DIR=/C/ProgramData/chocolatey/lib/mingw/tools/install/mingw64" >> $GITHUB_ENV
         if: runner.os == 'Windows'
       - name: Build extension
-        run: scripts/build.sh $TESTGAME_DIR/native/$(scripts/dr_platform.sh)
+        run: scripts/build.sh $TESTGAME_DIR/native/${{ steps.determine_dr_platform.outputs.dr_platform }}
       - name: Run tests
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
         with:
-          name: dragonruby-cext-libsocket-linux-amd64
-          path: ${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so
-        if: runner.os == 'Linux'
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dragonruby-cext-libsocket-windows-amd64
-          path: ${{ env.TESTGAME_DIR }}/native/windows-amd64/libsocket.dll
-        if: runner.os == 'Windows'
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dragonruby-cext-libsocket-macos
-          path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
-        if: runner.os == 'macOS'
-
+          name: dragonruby-cext-libsocket-${{ steps.determine_dr_platform.outputs.dr_platform }}
+          path: ${{ env.TESTGAME_DIR }}/native/${{ steps.determine_dr_platform.outputs.dr_platform }}/*
