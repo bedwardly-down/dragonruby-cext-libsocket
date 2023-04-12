@@ -234,7 +234,7 @@ static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len
   return client_sfd;
 }
 
-ssize_t c_send(int sfd, const void* buf, size_t size, const char* host, 
+ssize_t c_send(int sfd, const char* buf, size_t size, const char* host, 
                const char* service, int sendto_flags) {
   struct sockaddr_storage oldsock;
   struct addrinfo hint;
@@ -256,7 +256,7 @@ ssize_t c_send(int sfd, const void* buf, size_t size, const char* host,
       if (result_check != NULL)
         result_check = result_check->ai_next;
       if (-1 != (return_value = sendto(
-        sfd, buf, size, sendto_flags, result_check->ai_addr,
+        sfd, RSTRING_PTR(buf), size, sendto_flags, result_check->ai_addr,
         result_check->ai_addrlen
       )))
         break;
@@ -272,13 +272,14 @@ ssize_t c_send(int sfd, const void* buf, size_t size, const char* host,
   return return_value;
 }
 
-ssize_t c_receive(int sfd, void* buffer, size_t size,
+ssize_t c_receive(int sfd, char* buffer, size_t size,
                   char* src_host, size_t src_host_len,
                   char* src_service, size_t src_service_len,
                   int recvfrom_flags) {
+  struct sockaddr_storage client;
+  socklen_t stor_addrlen;
   ssize_t bytes;
   error.trigger = "receive";
-  void* buff = &buffer;
 
   switch (hook.step) {
     case 0:
@@ -291,7 +292,7 @@ ssize_t c_receive(int sfd, void* buffer, size_t size,
     case 2:
       return check_error(buffer == NULL || size == 0);
     case 3:
-      memset(buff, 0, size);
+      memset(buffer, 0, size);
       break;
     case 4:
       iter = strlen(src_host);
@@ -316,6 +317,13 @@ ssize_t c_receive(int sfd, void* buffer, size_t size,
       if (src_service)
         memset(src_service, 0, src_service_len);
       break;
+    case 9:
+      stor_addrlen = sizeof(struct sockaddr_storage);
+      break;
+    case 10:
+      return check_error(bytes = recvfrom(sfd, buffer, size, 
+                                          recvfrom_flags, (struct sockaddr *)&client, 
+                                          &stor_addrlen));
     default:
       hook.step = 0;
       hook.error = 1;

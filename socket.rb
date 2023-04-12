@@ -109,7 +109,7 @@ class Socket
   #
   # @param (string) message - whatever you want the other instance to receive
   def send message
-    c_send @socket, message.bytes, @config.message_length, @config.host, @config.port, @config.flags
+    c_send @socket, message, @config.message_length, @config.host, @config.port, @config.flags
   end
 
   # receive a message from the other socket
