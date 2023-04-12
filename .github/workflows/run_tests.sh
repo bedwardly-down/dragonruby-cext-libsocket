@@ -3,7 +3,7 @@
 mkdir -p $TESTGAME_DIR/libsocket
 cp *.rb $TESTGAME_DIR/libsocket
 
-# TODO: Start simple TCP server
+ruby .github/workflows/test-tcp-server.rb &
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ./dragonruby $TESTGAME_DIR
 
