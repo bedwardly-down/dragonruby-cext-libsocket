@@ -234,14 +234,13 @@ static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len
   return client_sfd;
 }
 
-ssize_t c_send(int sfd, char* buf, size_t size, const char* host, 
+ssize_t c_send(int sfd, const void* buf, size_t size, const char* host, 
                const char* service, int sendto_flags) {
   struct sockaddr_storage oldsock;
   struct addrinfo hint;
   socklen_t oldsocklen;
   int return_value;
   error.trigger = "send";
-  const void* buff = &buf;
 
   switch (hook.step) {
     case 0:
@@ -273,7 +272,7 @@ ssize_t c_send(int sfd, char* buf, size_t size, const char* host,
   return return_value;
 }
 
-ssize_t c_receive(int sfd, char* buffer, size_t size,
+ssize_t c_receive(int sfd, void* buffer, size_t size,
                   char* src_host, size_t src_host_len,
                   char* src_service, size_t src_service_len,
                   int recvfrom_flags) {

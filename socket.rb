@@ -109,7 +109,7 @@ class Socket
   #
   # @param (string) message - whatever you want the other instance to receive
   def send message
-    c_send @socket, message, @config.message_length, @config.host, @config.port, @config.flags
+    c_send @socket, message.bytes, @config.message_length, @config.host, @config.port, @config.flags
   end
 
   # receive a message from the other socket
@@ -117,7 +117,7 @@ class Socket
   # @param (string) sender_address - IP address or URL that you want to listen for
   # @param (string) sender_port - what port you want to hear from them on
   def receive sender_address, sender_port
-    c_receive @socket, "", @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
+    c_receive @socket, "Received".bytes, @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
   end
 
   # where sockets go to die and never return
