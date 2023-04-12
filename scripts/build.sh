@@ -10,7 +10,7 @@ set -e # Exit immediately if any command fails
 
 target_dir=$1
 platform=$(./scripts/dr_platform.sh)
-source_entrypoint=new-libsocket-bind.c
+source_entrypoint=libsocket-bind.c
 dr_headers=${2:-.}
 
 mkdir -p $target_dir
