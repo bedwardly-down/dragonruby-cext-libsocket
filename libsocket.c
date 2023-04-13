@@ -144,7 +144,6 @@ static inline int defaults() {
   error.code = 0;
   error.trigger = "";
   error.message = "";
-  
   return 0;
 }
 
@@ -167,7 +166,7 @@ int c_start(const char *bind_addr, const char *bind_port,  int flags) {
   error.trigger = "start";
 
   /* don't keep going if already connected */
-  if(hook.connected == 1)
+  if (hook.connected == 1)
     return 0;
 
 #ifdef _WIN32
