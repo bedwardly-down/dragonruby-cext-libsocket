@@ -119,15 +119,62 @@ static inline int check_error(int sfd) {
   return sfd;
 }
 
+/**
+ *
+ * @brief Clean way to initialize structs and other advanced objects so they don't crash DR
+ *
+ */
+static inline int defaults() {
+  iter = 0;
+  numeric = 0;
+
+  /* Init the C_API hook */
+  hook.connected = 0;
+  hook.kill = 0;
+  hook.error = 0;
+  hook.protocol = 0;
+  hook.ipv4 = 0;
+  hook.ipv6 = 0;
+  hook.read = 0;
+  hook.write = 0;
+  hook.step = 0;
+  hook.accept = 0;
+
+  /* Init the ERROR struct */
+  error.code = 0;
+  error.trigger = "";
+  error.message = "";
+  
+  return 0;
+}
+
+/**
+ *
+ * @brief Like defaults accept for releasing memory
+ *
+ */
+static inline int dispose() {
+  defaults();
+
+  result = NULL;
+  result_check = NULL;
+  return 0;
+}
+
 int c_start(const char *bind_addr, const char *bind_port,  int flags) {
   int sfd, domain, type, retval;
   struct addrinfo hints;
   error.trigger = "start";
 
+  /* don't keep going if already connected */
+  if(hook.connected == 1)
+    return 0;
+
 #ifdef _WIN32
   WSADATA d;
 #endif
 
+  defaults();
   switch (hook.step) {
     case 0:
 #ifdef _WIN32
@@ -297,7 +344,8 @@ ssize_t c_receive(int sfd, char* buffer, size_t size,
       memset(buffer, 0, size);
       break;
     case 4:
-      iter = strlen(src_host);
+      if (iter == 0)
+        iter = strlen(src_host);
       iter--;
       break;
     case 5:
@@ -441,6 +489,7 @@ int c_shutdown(int sfd) {
       hook.error = 1;
       break;
   }
+  dispose();
   return 0;
 }
 
@@ -450,7 +499,7 @@ int c_tick() {
 
   /* check if receive needs to move to next step or there's no error */
   if ((iter == 0 && hook.step == 5 && strcmp(error.trigger, "receive")) ||
-      (hook.error = 0)) {
+      (hook.error == 0)) {
     hook.step++;
   } 
 
