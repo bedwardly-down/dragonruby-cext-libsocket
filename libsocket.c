@@ -234,12 +234,13 @@ static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len
   return client_sfd;
 }
 
-ssize_t c_send(int sfd, const char* buf, size_t size, const char* host, 
+ssize_t c_send(int sfd, char* buf, size_t size, const char* host, 
                const char* service, int sendto_flags) {
   struct sockaddr_storage oldsock;
   struct addrinfo hint;
   socklen_t oldsocklen;
   int return_value;
+  void* buff = buf;
   error.trigger = "send";
 
   switch (hook.step) {
@@ -256,7 +257,7 @@ ssize_t c_send(int sfd, const char* buf, size_t size, const char* host,
       if (result_check != NULL)
         result_check = result_check->ai_next;
       if (-1 != (return_value = sendto(
-        sfd, RSTRING_PTR(buf), size, sendto_flags, result_check->ai_addr,
+        sfd, buff, size, sendto_flags, result_check->ai_addr,
         result_check->ai_addrlen
       )))
         break;
@@ -279,6 +280,7 @@ ssize_t c_receive(int sfd, char* buffer, size_t size,
   struct sockaddr_storage client;
   socklen_t stor_addrlen;
   ssize_t bytes;
+  void* buff = buffer;
   error.trigger = "receive";
 
   switch (hook.step) {
@@ -321,7 +323,7 @@ ssize_t c_receive(int sfd, char* buffer, size_t size,
       stor_addrlen = sizeof(struct sockaddr_storage);
       break;
     case 10:
-      return check_error(bytes = recvfrom(sfd, buffer, size, 
+      return check_error(bytes = recvfrom(sfd, buff, size, 
                                           recvfrom_flags, (struct sockaddr *)&client, 
                                           &stor_addrlen));
     default:

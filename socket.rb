@@ -75,7 +75,8 @@ class Socket
       #       https://www.man7.org/linux/man-pages/man2/socket.2.html
       flags: 0, # flags for this socket
       receive_flags: 0, # flags to better help a socket interact with this socket 
-      message_length: 80 # if you need to support more than 80 characters for the send function, increase this value. It may cause latency issues if you set it too high
+      message_length: 80, # if you need to support more than 80 characters for the send function, increase this value. It may cause latency issues if you set it too high
+      message: ""
     }
     self.error ||= c_error
     self.c_api ||= c_hook
@@ -109,15 +110,17 @@ class Socket
   #
   # @param (string) message - whatever you want the other instance to receive
   def send message
-    c_send @socket, message, @config.message_length, @config.host, @config.port, @config.flags
+    @config.message = message
+    c_send @socket, @config.message, @config.message_length, @config.host, @config.port, @config.flags
   end
 
   # receive a message from the other socket
   #
   # @param (string) sender_address - IP address or URL that you want to listen for
   # @param (string) sender_port - what port you want to hear from them on
-  def receive sender_address, sender_port
-    c_receive @socket, "Received".bytes, @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
+  def receive message, sender_address, sender_port
+    @config.message = message
+    c_receive @socket, @config.message, @config.message_length, sender_address, 256, sender_port, 50, @config.receive_flags
   end
 
   # where sockets go to die and never return
