@@ -36,6 +36,24 @@
 $gtk.ffi_misc.gtk_dlopen("libsocket")
 include FFI::SOCKET
 
+# C-API Endpoints for interacting with the underlying C library
+#
+# c_error - need to know why something failed under the hood or need to check for a specific error, use this
+#         main error handling and processing are up to you to do. This will just give you all you need for that
+#     c_error.code - system error code; see the official documentation for the platform for more info
+#     c_error.message - system error information in a human readable format
+#     c_error.trigger - which function caused the failure
+#
+# c_hook - need to check the state of the underlying library or tell it to do stuff without touching C? use this
+#     c_hook.connected - is the socket connected? 0 - false; 1 - true
+#     c_hook.kill - socket waiting to shutdown or in the process of
+#     c_hook.error - was an error thrown - use this to check
+#     c_hook.protocol - 0 UDP 1 TCP - only use if you need a TCP socket created
+#     c_hook.ipv4 - use a normal IP connection (default - use whichever one is better for current customer's network)
+#     c_hook.ipv6 - use the cooler, newer IP connection but not supported on all individual computers (default - use whichever one is better for current customer's network)
+#     c_hook.read - a receive process is being shutdown
+#     c_hook.write - a send process is being shutdown
+#
 class Socket
   attr_accessor :socket, :config, :error, :c_api
 
@@ -44,25 +62,6 @@ class Socket
   # socket - the socket object created by the all the scary C code; you probably won't touch this at all
   # config - need to change something optional, do it here; you most likely won't care about this at all
   #
-  # error - need to know why something failed under the hood or need to check for a specific error, use this
-  #         main error handling and processing are up to you to do. This will just give you all you need for that
-  #
-  # error endpoints:
-  #     error.code - system error code; see the official documentation for the platform for more info
-  #     error.message - system error information in a human readable format
-  #     error.trigger - which function caused the failure
-  #
-  # c_api - need to check the state of the underlying library or tell it to do stuff without touching C? use this
-  #
-  # c_api endpoints (all are either 0 or 1)
-  #     c_api.connected - is the socket connected? 0 - false; 1 - true
-  #     c_api.kill - socket waiting to shutdown or in the process of
-  #     c_api.error - was an error thrown - use this to check
-  #     c_api.protocol - 0 UDP 1 TCP - only use if you need a TCP socket created
-  #     c_api.ipv4 - use a normal IP connection (default - use whichever one is better for current customer's network)
-  #     c_api.ipv6 - use the cooler, newer IP connection but not supported on all individual computers (default - use whichever one is better for current customer's network)
-  #     c_api.read - a receive process is being shutdown
-  #     c_api.write - a send process is being shutdown
 
   def initialize
     self.socket ||= 0
@@ -74,11 +73,8 @@ class Socket
       # if in doubt, leave at 0; see here for more information:
       #       https://www.man7.org/linux/man-pages/man2/socket.2.html
       flags: 0, # flags for this socket
-      receive_flags: 0, # flags to better help a socket interact with this socket 
-      message_length: 80 # if you need to support more than 80 characters for the send function, increase this value. It may cause latency issues if you set it too high
+      receive_flags: 0 # flags to better help a socket interact with this socket 
     }
-    self.error ||= c_error
-    self.c_api ||= c_hook
   end
 
   # place this after running Socket.new to start a socket connection but not actually connect yet
