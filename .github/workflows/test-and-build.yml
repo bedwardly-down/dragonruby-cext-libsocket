@@ -16,7 +16,7 @@ jobs:
           - windows-2022
           - macos-12
         dr_version:
-          - '4.7'
+          - '4.8'
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
