@@ -35,17 +35,17 @@ jobs:
         run: .github/workflows/run_tests.sh
       - uses: actions/upload-artifact@v3
         with:
-          name: dragonruby-cext-libsocket-linux-amd64
+          name: dragonruby-cext-libsocket-for-dr-${{ matrix.dr_version }}-linux-amd64
           path: ${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so
         if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v3
         with:
-          name: dragonruby-cext-libsocket-windows-amd64
+          name: dragonruby-cext-libsocket-for-dr-${{ matrix.dr_version }}-windows-amd64
           path: ${{ env.TESTGAME_DIR }}/native/windows-amd64/libsocket.dll
         if: runner.os == 'Windows'
       - uses: actions/upload-artifact@v3
         with:
-          name: dragonruby-cext-libsocket-macos
+          name: dragonruby-cext-libsocket-for-dr-${{ matrix.dr_version }}-macos
           path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
         if: runner.os == 'macOS'
 
