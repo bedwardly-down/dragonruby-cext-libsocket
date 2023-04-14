@@ -69,28 +69,19 @@
  *
  */
 
-typedef struct Flag {
-  unsigned int connected : 1;
-  unsigned int kill : 1;
-  unsigned int error : 1;
-  unsigned int protocol : 1;
-  unsigned int ipv4 : 1;
-  unsigned int ipv6 : 1;
-  unsigned int read : 1;
-  unsigned int write : 1;
-  int step;
-  int accept;
-} Flag;
-
-typedef struct Error {
-  int code;
-  char* message;
-  char* trigger;
-} Error;
+typedef struct C_Hooks {
+  unsigned int socket_connected : 1;
+  unsigned int error_thrown : 1;
+  unsigned int data_sent : 1;
+  unsigned int data_received : 1;
+  unsigned int use_tcp : 1;
+  unsigned int use_ipv4 : 1;
+  unsigned int close_socket : 1;
+  unsigned int shutdown_socket : 1;
+} C_Hooks;
 
 /* static variables go here */
-static Flag hook;
-static Error error;
+static C_Hooks hook;
 
 /* set these as external variables so they can be set and travel between steps */
 static struct addrinfo *result, *result_check;
@@ -101,7 +92,6 @@ int c_open(int sfd, const char* host, const char* service);
 int c_close(int sfd);
 int c_shutdown(int sfd);
 int c_tick();
-Error c_error();
 
 /* To solve the accept4 Warning */
 #ifdef linux
@@ -129,21 +119,14 @@ static inline int defaults() {
   numeric = 0;
 
   /* Init the C_API hook */
-  hook.connected = 0;
-  hook.kill = 0;
-  hook.error = 0;
-  hook.protocol = 0;
-  hook.ipv4 = 0;
-  hook.ipv6 = 0;
-  hook.read = 0;
-  hook.write = 0;
-  hook.step = 0;
-  hook.accept = 0;
-
-  /* Init the ERROR struct */
-  error.code = 0;
-  error.trigger = "";
-  error.message = "";
+  hook.socket_connected = 0;
+  hook.error_thrown = 0;
+  hook.data_sent = 0;
+  hook.data_received = 0;
+  hook.use_tcp = 0;
+  hook.use_ipv4 = 0;
+  hook.close_socket = 0;
+  hook.shutdown_socket = 0;
   return 0;
 }
 
@@ -328,7 +311,6 @@ int c_open(int sfd, const char* host, const char *service) {
   check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
                                    &oldsockaddrlen));
   if (oldsockaddrlen > sizeof(struct sockaddr_storage))
-    hook.error = 1;
 
   memset(&hint, 0, sizeof(struct addrinfo));
 
@@ -348,7 +330,6 @@ int c_open(int sfd, const char* host, const char *service) {
   else
     check_error(return_value);
   if (result_check == NULL) {
-    hook.error = 1;
     freeaddrinfo(result);
   }
   freeaddrinfo(result);
@@ -387,36 +368,9 @@ int c_shutdown(int sfd) {
 }
 
 int c_tick() {
-  char* str;
-
-  /* check if error is passed and then send that info to DragonRuby */
-  if (hook.error == 1) {
-#if defined(_WIN32)
-    error.code = WSAGetLastError();
-    sprintf(str, "%d", error.code);
-    str = strcpy(": ", str);
-    str = strcpy(error.trigger, str);
-    str = strcpy("- ", str);
-    FormatMessage(
-      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-      str, 0, 0, NULL, 64, NULL);
-#else
-    error.code = errno;
-    sprintf(str, "%d", error.code);
-    str = strcpy(": ", str);
-    str = strcpy(error.trigger, str);
-    str = strcpy("- ", str);
-    str = strcpy(strerror(errno), str);
-#endif
-    error.message = str;
-  }
   return 0;
 }
 
-Error c_error() {
-  return error;
-}
-
-Flag c_hook() {
+C_Hooks c_hook() {
   return hook;
 }
