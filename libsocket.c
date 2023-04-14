@@ -69,7 +69,7 @@
  *
  */
 
-typedef struct C_Hooks {
+typedef struct Hooks {
   unsigned int socket_connected : 1;
   unsigned int error_thrown : 1;
   unsigned int data_sent : 1;
@@ -81,46 +81,24 @@ typedef struct C_Hooks {
   char* socket_address;
   char* socket_port;
   char* message;
-} C_Hooks;
+} Hooks;
 
 /* static variables go here */
-static C_Hooks hook;
-
-/* set these as external variables so they can be set and travel between steps */
-static struct addrinfo *result, *result_check;
-static int iter, numeric;
+static Hooks hook;
+static int sfd;
 
 /* define various functions here */
-int c_open(int sfd, const char* host, const char* service);
-int c_close(int sfd);
-int c_shutdown(int sfd);
+static int c_open();
+static int c_close();
+static int c_shutdown();
 int c_tick();
-
-/* To solve the accept4 Warning */
-#ifdef linux
-#ifndef __USE_GNU
-#define __USE_GNU
-extern int accept4(int sfd, struct sockaddr * addr, socklen_t * addrlen, int flags);
-#endif
-#endif
-
-static inline int check_error(int sfd) {
-  if (sfd < 0) {
-    hook.error = 1;
-    return -1;
-  }
-  return sfd;
-}
 
 /**
  *
  * @brief Clean way to initialize structs and other advanced objects so they don't crash DR
  *
  */
-static inline int defaults() {
-  iter = 0;
-  numeric = 0;
-
+static inline int c_defaults() {
   /* Init the C_API hook */
   hook.socket_connected = 0;
   hook.error_thrown = 0;
@@ -141,30 +119,22 @@ static inline int defaults() {
  * @brief Like defaults accept for releasing memory
  *
  */
-static inline int dispose() {
-  defaults();
-
-  result = NULL;
-  result_check = NULL;
+static inline int c_dispose() {
+  c_defaults();
   return 0;
 }
 
-static int start(const char *bind_addr, const char *bind_port) {
+static inline int c_start(const char *bind_addr, const char *bind_port) {
   int sfd, domain, type, retval;
-  struct addrinfo hints;
-  error.trigger = "start";
-
-  /* don't keep going if already connected */
-  if (hook.connected == 1)
-    return 0;
+  struct addrinfo *result, *result_check, hints;
 
 #ifdef _WIN32
   WSADATA d;
 #endif
 
-  defaults();
+  c_defaults();
 #ifdef _WIN32
-  check_error(WSAStartup(MAKEWORD(2, 2), &d));
+  WSAStartup(MAKEWORD(2, 2), &d);
 #endif
 
   /* check what protocol to use */
@@ -189,14 +159,14 @@ static int start(const char *bind_addr, const char *bind_port) {
     result_check = result_check->ai_next;
   
   sfd = socket(result_check->ai_family, 
-               result_check->ai_socktype | flags, result_check->ai_protocol);
+               result_check->ai_socktype, result_check->ai_protocol);
 
   retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
 
   if (type == SOCK_STREAM) retval = listen(sfd, LIBSOCKET_BACKLOG);
 
   if (retval != 0) {
-    c_close(sfd);
+    close(sfd);
   }
 
   /* we have socket creation */
@@ -205,20 +175,16 @@ static int start(const char *bind_addr, const char *bind_port) {
   return sfd;
 }
 
-static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len,
+static inline int accept_tcp_socket(char *src_host, size_t src_host_len,
                       char *src_service, size_t src_service_len,
                       int flags) {
   struct sockaddr_storage client_info;
   int client_sfd;
   socklen_t addrlen;
-  error.trigger = "accept_tcp";
 
   addrlen = sizeof(struct sockaddr_storage);
-#ifdef linux
-  check_error(client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, hook.accept));
-#else
-  check_error(client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen));
-#endif
+  client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen);
+
   if (src_host_len > 0 ||
       src_service_len > 0)  // If one of the things is wanted. If you give a null pointer
                             // with a positive _len parameter, you won't get the address.
@@ -232,18 +198,16 @@ static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len
   return client_sfd;
 }
 
-ssize_t c_send(int sfd, char* buf, size_t size, const char* host, 
-               const char* service, int sendto_flags) {
+static inline ssize_t c_send(int sfd, char* buf, size_t size, const char* host, 
+               const char* service) {
   struct sockaddr_storage oldsock;
-  struct addrinfo hint;
+  struct addrinfo *result, *result_check, hint;
   socklen_t oldsocklen;
   int return_value;
   void* buff = buf;
-  error.trigger = "send";
 
   oldsocklen = sizeof(struct sockaddr_storage);
-  check_error((sfd < 0) || (buf == NULL || host == NULL || service == NULL));
-  check_error(getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen));
+  getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen);
   memset(&hint, 0, sizeof(struct addrinfo));
 
   result_check = result;
@@ -251,33 +215,24 @@ ssize_t c_send(int sfd, char* buf, size_t size, const char* host,
     result_check = result_check->ai_next;
 
   if (-1 != (return_value = sendto(
-    sfd, buff, size, sendto_flags, result_check->ai_addr,
+    sfd, buff, size, 0, result_check->ai_addr,
     result_check->ai_addrlen
   )))
     freeaddrinfo(result);
-  else
-    check_error(return_value);
-
   return return_value;
 }
 
-ssize_t c_receive(int sfd, char* buffer, size_t size,
+static inline ssize_t c_receive(char* buffer, size_t size,
                   char* src_host, size_t src_host_len,
-                  char* src_service, size_t src_service_len,
-                  int recvfrom_flags) {
+                  char* src_service, size_t src_service_len) {
   struct sockaddr_storage client;
   socklen_t stor_addrlen;
   ssize_t bytes;
   void* buff = buffer;
-  error.trigger = "receive";
 
   /* check if using TCP and if it can accept data */
-  if (hook.protocol != 0) 
-    check_error(accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags));
-
-  check_error(sfd);
-
-  check_error(buffer == NULL || size == 0);
+  if (hook.use_tcp == 1) 
+    accept_tcp_socket(src_host, src_host_len, src_service, src_service_len, (NI_NUMERICHOST | NI_NUMERICSERV));
 
   memset(buffer, 0, size);
 
@@ -289,31 +244,28 @@ ssize_t c_receive(int sfd, char* buffer, size_t size,
 
   stor_addrlen = sizeof(struct sockaddr_storage);
 
-  check_error(bytes = recvfrom(sfd, buff, size, 
-              recvfrom_flags, (struct sockaddr *)&client, 
-              &stor_addrlen));
-  return bytes;
+  return recvfrom(sfd, buff, size, 
+         0, (struct sockaddr *)&client, 
+         &stor_addrlen);
 }
 
-int c_open(int sfd, const char* host, const char *service) {
-  struct addrinfo hint;
+static int c_open() {
+  struct addrinfo *result, *result_check, hint;
   struct sockaddr_storage oldsockaddr;
   socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
   int return_value;
   
-  check_error(sfd);
   /* if (host == NULL) return 0;
       break; */
-  check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
-                                   &oldsockaddrlen));
+  getsockname(sfd, (struct sockaddr *)&oldsockaddr,
+              &oldsockaddrlen);
   if (oldsockaddrlen > sizeof(struct sockaddr_storage))
 
   memset(&hint, 0, sizeof(struct addrinfo));
 
   hint.ai_family = ((struct sockaddr_in *)&oldsockaddr)->sin_family;
   hint.ai_socktype = SOCK_DGRAM;
-  return_value = getaddrinfo(host, service, &hint, &result);
-  check_error(return_value);
+  return_value = getaddrinfo(hook.socket_address, hook.socket_port, &hint, &result);
 
   result_check = result;
   if (result_check != NULL)
@@ -321,53 +273,49 @@ int c_open(int sfd, const char* host, const char *service) {
   if (-1 != (return_value = connect(
     sfd, result_check->ai_addr,
     result_check->ai_addrlen))) {
-
+      freeaddrinfo(result);
     }
-  else
-    check_error(return_value);
   if (result_check == NULL) {
     freeaddrinfo(result);
   }
-  freeaddrinfo(result);
   return 0;
 }
 
-int c_close(int sfd) {
+static int c_close() {
   /* since this process can happen during any other process, always return step back to original state */
-  error.trigger = "close";
-
-  check_error(sfd);
-
 #if defined(_WIN32)
-  check_error(closesocket(sfd));
+  closesocket(sfd);
 #elif defined(linux) || defined(__APPLE__)
-  check_error(close(sfd));
+  close(sfd);
 #endif
-  check_error(result_check == NULL);
-  freeaddrinfo(result);
   return 0;
 }
 
-int c_shutdown(int sfd) {
-  error.trigger = "shutdown";
-
-  check_error(sfd);
-  if (hook.read == 1)
-    check_error(shutdown(sfd, SHUT_RD));
-  if (hook.write == 1)
-    check_error(shutdown(sfd, SHUT_WR));
+static int c_shutdown() {
+  shutdown(sfd, SHUT_RD);
+  shutdown(sfd, SHUT_WR);
 #ifdef _WIN32
-  check_error(WSACleanup());
+  WSACleanup();
 #endif
-  dispose();
+  c_dispose();
   return 0;
 }
 
 int c_tick() {
-  if (hook.socket_connected == 0) start(hook.server_host, hook.server_port);
+  if (hook.socket_connected == 0 && hook.close_socket == 0 && hook.shutdown_socket == 0) 
+    c_start(hook.socket_address, hook.socket_port);
+  if (strcmp(hook.message, "") != 0 && hook.socket_connected == 1)
+    c_send(sfd, hook.message, strlen(hook.message), hook.socket_address, hook.socket_port);
+/* if (hook.socket_connected == 1)
+    c_receive(sfd, char *buffer, size_t size, char *src_host, size_t src_host_len, char *src_service, size_t src_service_len); */
+
+  if (hook.close_socket == 1)
+    c_close();
+  if (hook.shutdown_socket == 1)
+    c_shutdown();
   return 0;
 }
 
-C_Hooks c_hook() {
+Hooks c_hook() {
   return hook;
 }
