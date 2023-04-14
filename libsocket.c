@@ -174,71 +174,55 @@ int c_start(const char *bind_addr, const char *bind_port,  int flags) {
 #endif
 
   defaults();
-  switch (hook.step) {
-    case 0:
 #ifdef _WIN32
-      return check_error(WSAStartup(MAKEWORD(2, 2), &d));
+  check_error(WSAStartup(MAKEWORD(2, 2), &d));
 #endif
-    case 1:
-      /* check if address and port are configured correctly */
-      if (hook.error == 0) 
-        return check_error(bind_addr == NULL || bind_port == NULL);
-    case 2:
-      /* check what protocol to use */
-      if (hook.protocol == 0) type = SOCK_DGRAM;
-      else type = SOCK_STREAM;
-      break;
-    case 3:
-      /* allocate memory for socket */
-      memset(&hints, 0, sizeof(struct addrinfo));
-      break;
-    case 4:
-      /* fill in hints */
-      hints.ai_socktype = type;
-      hints.ai_family = domain;
-      hints.ai_flags = AI_PASSIVE;
-      break;
-    case 5:
-      /* make sure the return value is completely empty */
-      return check_error(retval = getaddrinfo(bind_addr, bind_port, &hints, &result));
-    case 6:
-      if (hook.error == 0)
-        result_check = result;
-      break;
-    case 7:
-      /* go through the linked list of struct addrinfo elements */
-      if (result_check != NULL) 
-        result_check = result_check->ai_next;
-      
-      sfd = check_error(socket(result_check->ai_family, 
-                               result_check->ai_socktype | flags, result_check->ai_protocol));
-      if (hook.error == 0)
-        retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
 
-      if (type == SOCK_STREAM) retval = check_error(listen(sfd, LIBSOCKET_BACKLOG));
+  /* check if address and port are configured correctly */
+  check_error(bind_addr == NULL || bind_port == NULL);
 
-      if (retval != 0 && hook.error == 0) {
-        c_close(sfd);
-      }
-      break;
-    case 8:
-      /* final check */
-      if (result_check == NULL) {
-        freeaddrinfo(result);
-        hook.error = 1;
-      }
-      break;
-    case 9:
-      /* we have socket creation */
-      freeaddrinfo(result);
-      hook.connected = 1;
-      hook.step = 0;
-      break;
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
+  /* check what protocol to use */
+  if (hook.protocol == 0) type = SOCK_DGRAM;
+  else type = SOCK_STREAM;
+
+  /* allocate memory for socket */
+  memset(&hints, 0, sizeof(struct addrinfo));
+
+  /* fill in hints */
+  hints.ai_socktype = type;
+  hints.ai_family = domain;
+  hints.ai_flags = AI_PASSIVE;
+
+  /* make sure the return value is completely empty */
+  check_error(retval = getaddrinfo(bind_addr, bind_port, &hints, &result));
+
+  result_check = result;
+
+  /* go through the linked list of struct addrinfo elements */
+  if (result_check != NULL) 
+    result_check = result_check->ai_next;
+  
+  sfd = check_error(socket(result_check->ai_family, 
+                           result_check->ai_socktype | flags, result_check->ai_protocol));
+
+  retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
+
+  if (type == SOCK_STREAM) retval = check_error(listen(sfd, LIBSOCKET_BACKLOG));
+
+  if (retval != 0) {
+    c_close(sfd);
   }
+
+  /* final check */
+  if (result_check == NULL) {
+    freeaddrinfo(result);
+    hook.error = 1;
+    return -1;
+  }
+
+  /* we have socket creation */
+  freeaddrinfo(result);
+  hook.connected = 1;
   return sfd;
 }
 
@@ -250,32 +234,21 @@ static inline int accept_tcp_socket(int sfd, char *src_host, size_t src_host_len
   socklen_t addrlen;
   error.trigger = "accept_tcp";
 
-  switch (hook.step) {
-    case 0:
-      addrlen = sizeof(struct sockaddr_storage);
+  addrlen = sizeof(struct sockaddr_storage);
 #ifdef linux
-      return check_error(client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, hook.accept));
+  check_error(client_sfd = accept4(sfd, (struct sockaddr *)&client_info, &addrlen, hook.accept));
 #else
-      return check_error(client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen));
+  check_error(client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen));
 #endif
-      break;
-    case 1:
-      if (src_host_len > 0 ||
-          src_service_len > 0)  // If one of the things is wanted. If you give a null pointer
-                                // with a positive _len parameter, you won't get the address.
-      {
-          if (flags == LIBSOCKET_NUMERIC) {
-              flags = NI_NUMERICHOST | NI_NUMERICSERV;
-          } else {
-              flags = 0;  // To prevent errors: Unknown flags are ignored
-          }
+  if (src_host_len > 0 ||
+      src_service_len > 0)  // If one of the things is wanted. If you give a null pointer
+                            // with a positive _len parameter, you won't get the address.
+  {
+      if (flags == LIBSOCKET_NUMERIC) {
+          flags = NI_NUMERICHOST | NI_NUMERICSERV;
+      } else {
+          flags = 0;  // To prevent errors: Unknown flags are ignored
       }
-      hook.step = 0;
-      break;
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
   }
   return client_sfd;
 }
@@ -289,33 +262,23 @@ ssize_t c_send(int sfd, char* buf, size_t size, const char* host,
   void* buff = buf;
   error.trigger = "send";
 
-  switch (hook.step) {
-    case 0:
-      oldsocklen = sizeof(struct sockaddr_storage);
-      return check_error((sfd < 0) || (buf == NULL || host == NULL || service == NULL));
-    case 1:
-      return check_error(getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen));
-    case 2:
-      memset(&hint, 0, sizeof(struct addrinfo));
-      break;
-    case 3:
-      result_check = result;
-      if (result_check != NULL)
-        result_check = result_check->ai_next;
-      if (-1 != (return_value = sendto(
-        sfd, buff, size, sendto_flags, result_check->ai_addr,
-        result_check->ai_addrlen
-      )))
-        break;
-      else
-        check_error(return_value);
-    case 4:
-      freeaddrinfo(result);
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
-  }
+  oldsocklen = sizeof(struct sockaddr_storage);
+  check_error((sfd < 0) || (buf == NULL || host == NULL || service == NULL));
+  check_error(getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen));
+  memset(&hint, 0, sizeof(struct addrinfo));
+
+  result_check = result;
+  if (result_check != NULL)
+    result_check = result_check->ai_next;
+
+  if (-1 != (return_value = sendto(
+    sfd, buff, size, sendto_flags, result_check->ai_addr,
+    result_check->ai_addrlen
+  )))
+    freeaddrinfo(result);
+  else
+    check_error(return_value);
+
   return return_value;
 }
 
@@ -329,55 +292,27 @@ ssize_t c_receive(int sfd, char* buffer, size_t size,
   void* buff = buffer;
   error.trigger = "receive";
 
-  switch (hook.step) {
-    case 0:
-      /* check if using TCP and if it can accept data */
-      if (hook.protocol != 0) 
-        return check_error(accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags));
-      break;
-    case 1:
-      return check_error(sfd);
-    case 2:
-      return check_error(buffer == NULL || size == 0);
-    case 3:
-      memset(buffer, 0, size);
-      break;
-    case 4:
-      if (iter == 0)
-        iter = strlen(src_host);
-      iter--;
-      break;
-    case 5:
-      if ((src_host[iter] > -1 && src_host[iter] < 10) || (src_host[iter] == '.')) {
-        numeric++;
-      }
-      else
-        numeric = -1;
-      break;
-    case 6:
-      if (numeric > 0)
-        numeric = NI_NUMERICHOST | NI_NUMERICSERV;
-      break;
-    case 7:
-      if (src_host)
-        memset(src_host, 0, src_host_len);
-      break;
-    case 8:
-      if (src_service)
-        memset(src_service, 0, src_service_len);
-      break;
-    case 9:
-      stor_addrlen = sizeof(struct sockaddr_storage);
-      break;
-    case 10:
-      return check_error(bytes = recvfrom(sfd, buff, size, 
-                                          recvfrom_flags, (struct sockaddr *)&client, 
-                                          &stor_addrlen));
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
-  }
+  /* check if using TCP and if it can accept data */
+  if (hook.protocol != 0) 
+    check_error(accept_tcp_socket(sfd, src_host, src_host_len, src_service, src_service_len, recvfrom_flags));
+
+  check_error(sfd);
+
+  check_error(buffer == NULL || size == 0);
+
+  memset(buffer, 0, size);
+
+  if (src_host)
+    memset(src_host, 0, src_host_len);
+
+  if (src_service)
+    memset(src_service, 0, src_service_len);
+
+  stor_addrlen = sizeof(struct sockaddr_storage);
+
+  check_error(bytes = recvfrom(sfd, buff, size, 
+              recvfrom_flags, (struct sockaddr *)&client, 
+              &stor_addrlen));
   return bytes;
 }
 
@@ -387,120 +322,72 @@ int c_open(int sfd, const char* host, const char *service) {
   socklen_t oldsockaddrlen = sizeof(struct sockaddr_storage);
   int return_value;
   
-  switch (hook.step) {
-    case 0:
-      return check_error(sfd);
-    case 1:
-    /* if (host == NULL) return 0;
-        break; */
-      return check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
-                                     &oldsockaddrlen));
-    case 2:
-      if (oldsockaddrlen > sizeof(struct sockaddr_storage))
-        hook.error = 1;
-      break;
-    case 3:
-      memset(&hint, 0, sizeof(struct addrinfo));
-      break;
-    case 4:
-      hint.ai_family = ((struct sockaddr_in *)&oldsockaddr)->sin_family;
-      hint.ai_socktype = SOCK_DGRAM;
-      return_value = getaddrinfo(host, service, &hint, &result);
-      return check_error(return_value);
-    case 5:
-      result_check = result;
-      if (result_check != NULL)
-        result_check = result_check->ai_next;
-      if (-1 != (return_value = connect(
-        sfd, result_check->ai_addr,
-        result_check->ai_addrlen)))
-        break;
-      else
-        return check_error(return_value);
-    case 6:
-      if (result_check == NULL) {
-        hook.error = 1;
-        freeaddrinfo(result);
-      }
-      break;
-    case 7:
-      freeaddrinfo(result);
-      break;
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
+  check_error(sfd);
+  /* if (host == NULL) return 0;
+      break; */
+  check_error(getsockname(sfd, (struct sockaddr *)&oldsockaddr,
+                                   &oldsockaddrlen));
+  if (oldsockaddrlen > sizeof(struct sockaddr_storage))
+    hook.error = 1;
+
+  memset(&hint, 0, sizeof(struct addrinfo));
+
+  hint.ai_family = ((struct sockaddr_in *)&oldsockaddr)->sin_family;
+  hint.ai_socktype = SOCK_DGRAM;
+  return_value = getaddrinfo(host, service, &hint, &result);
+  check_error(return_value);
+
+  result_check = result;
+  if (result_check != NULL)
+    result_check = result_check->ai_next;
+  if (-1 != (return_value = connect(
+    sfd, result_check->ai_addr,
+    result_check->ai_addrlen))) {
+
+    }
+  else
+    check_error(return_value);
+  if (result_check == NULL) {
+    hook.error = 1;
+    freeaddrinfo(result);
   }
+  freeaddrinfo(result);
   return 0;
 }
 
 int c_close(int sfd) {
   /* since this process can happen during any other process, always return step back to original state */
-  int old_step = hook.step;
   error.trigger = "close";
 
-  hook.step = 0;
-  switch (hook.step) {
-    case 0:
-      return check_error(sfd);
-    case 1:
+  check_error(sfd);
+
 #if defined(_WIN32)
-      return check_error(closesocket(sfd));
+  check_error(closesocket(sfd));
 #elif defined(linux) || defined(__APPLE__)
-      return check_error(close(sfd));
+  check_error(close(sfd));
 #endif
-      break;
-    case 2:
-      return check_error(result_check == NULL);
-    case 3:
-      freeaddrinfo(result);
-      hook.step = old_step;
-      break;
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
-  }
+  check_error(result_check == NULL);
+  freeaddrinfo(result);
   return 0;
 }
 
 int c_shutdown(int sfd) {
   error.trigger = "shutdown";
 
-  switch (hook.step) {
-    case 0:
-      return check_error(sfd);
-    case 1:
-      if (hook.read == 1)
-        return check_error(shutdown(sfd, SHUT_RD));
-      break;
-    case 2:
-      if (hook.write == 1)
-        return check_error(shutdown(sfd, SHUT_WR));
-      break;
-    case 3:
+  check_error(sfd);
+  if (hook.read == 1)
+    check_error(shutdown(sfd, SHUT_RD));
+  if (hook.write == 1)
+    check_error(shutdown(sfd, SHUT_WR));
 #ifdef _WIN32
-      return check_error(WSACleanup());
+  check_error(WSACleanup());
 #endif
-      break;
-    default:
-      hook.step = 0;
-      hook.error = 1;
-      break;
-  }
   dispose();
   return 0;
 }
 
 int c_tick() {
-  char buf[256];
   char* str;
-
-  /* check if receive needs to move to next step or there's no error */
-  if ((iter == 0 && hook.step == 5 && strcmp(error.trigger, "receive")) ||
-      (hook.error == 0)) {
-    hook.step++;
-  } 
 
   /* check if error is passed and then send that info to DragonRuby */
   if (hook.error == 1) {
