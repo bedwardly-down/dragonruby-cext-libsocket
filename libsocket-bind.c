@@ -313,16 +313,52 @@ static mrb_value drb_ffi__ZTS5Hooks_socket_port_Set(mrb_state *state, mrb_value 
     (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->socket_port = new_value;
     return mrb_nil_value();
 }
-static mrb_value drb_ffi__ZTS5Hooks_message_Get(mrb_state *state, mrb_value self) {
+static mrb_value drb_ffi__ZTS5Hooks_sent_message_Get(mrb_state *state, mrb_value self) {
     Hooks record = drb_ffi__ZTS5Hooks_FromRuby(state, self);
-    return drb_ffi__ZTSPc_ToRuby(state, record.message);
+    return drb_ffi__ZTSPc_ToRuby(state, record.sent_message);
 }
-static mrb_value drb_ffi__ZTS5Hooks_message_Set(mrb_state *state, mrb_value self) {
+static mrb_value drb_ffi__ZTS5Hooks_sent_message_Set(mrb_state *state, mrb_value self) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     char *new_value = drb_ffi__ZTSPc_FromRuby(state, args[0]);
-    (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->message = new_value;
+    (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->sent_message = new_value;
+    return mrb_nil_value();
+}
+static mrb_value drb_ffi__ZTS5Hooks_external_address_Get(mrb_state *state, mrb_value self) {
+    Hooks record = drb_ffi__ZTS5Hooks_FromRuby(state, self);
+    return drb_ffi__ZTSPc_ToRuby(state, record.external_address);
+}
+static mrb_value drb_ffi__ZTS5Hooks_external_address_Set(mrb_state *state, mrb_value self) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    char *new_value = drb_ffi__ZTSPc_FromRuby(state, args[0]);
+    (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->external_address = new_value;
+    return mrb_nil_value();
+}
+static mrb_value drb_ffi__ZTS5Hooks_external_port_Get(mrb_state *state, mrb_value self) {
+    Hooks record = drb_ffi__ZTS5Hooks_FromRuby(state, self);
+    return drb_ffi__ZTSPc_ToRuby(state, record.external_port);
+}
+static mrb_value drb_ffi__ZTS5Hooks_external_port_Set(mrb_state *state, mrb_value self) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    char *new_value = drb_ffi__ZTSPc_FromRuby(state, args[0]);
+    (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->external_port = new_value;
+    return mrb_nil_value();
+}
+static mrb_value drb_ffi__ZTS5Hooks_received_message_Get(mrb_state *state, mrb_value self) {
+    Hooks record = drb_ffi__ZTS5Hooks_FromRuby(state, self);
+    return drb_ffi__ZTSPc_ToRuby(state, record.received_message);
+}
+static mrb_value drb_ffi__ZTS5Hooks_received_message_Set(mrb_state *state, mrb_value self) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    char *new_value = drb_ffi__ZTSPc_FromRuby(state, args[0]);
+    (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->received_message = new_value;
     return mrb_nil_value();
 }
 static mrb_value drb_ffi_c_tick_Binding(mrb_state *state, mrb_value value) {
@@ -380,6 +416,12 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_method(state, HooksClass, "socket_address=", drb_ffi__ZTS5Hooks_socket_address_Set, MRB_ARGS_REQ(1));
     drb_api->mrb_define_method(state, HooksClass, "socket_port", drb_ffi__ZTS5Hooks_socket_port_Get, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, HooksClass, "socket_port=", drb_ffi__ZTS5Hooks_socket_port_Set, MRB_ARGS_REQ(1));
-    drb_api->mrb_define_method(state, HooksClass, "message", drb_ffi__ZTS5Hooks_message_Get, MRB_ARGS_REQ(0));
-    drb_api->mrb_define_method(state, HooksClass, "message=", drb_ffi__ZTS5Hooks_message_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, HooksClass, "sent_message", drb_ffi__ZTS5Hooks_sent_message_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, HooksClass, "sent_message=", drb_ffi__ZTS5Hooks_sent_message_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, HooksClass, "external_address", drb_ffi__ZTS5Hooks_external_address_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, HooksClass, "external_address=", drb_ffi__ZTS5Hooks_external_address_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, HooksClass, "external_port", drb_ffi__ZTS5Hooks_external_port_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, HooksClass, "external_port=", drb_ffi__ZTS5Hooks_external_port_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, HooksClass, "received_message", drb_ffi__ZTS5Hooks_received_message_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, HooksClass, "received_message=", drb_ffi__ZTS5Hooks_received_message_Set, MRB_ARGS_REQ(1));
 }

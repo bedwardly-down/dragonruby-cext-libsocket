@@ -80,7 +80,10 @@ typedef struct Hooks {
   unsigned int shutdown_socket : 1;
   char* socket_address;
   char* socket_port;
-  char* message;
+  char* sent_message;
+  char* external_address;
+  char* external_port;
+  char* received_message;
 } Hooks;
 
 /* static variables go here */
@@ -110,7 +113,10 @@ static inline int c_defaults() {
   hook.shutdown_socket = 0;
   hook.socket_address = "";
   hook.socket_port = "";
-  hook.message = "";
+  hook.sent_message = "";
+  hook.external_address = "";
+  hook.external_port = "";
+  hook.received_message = "";
   return 0;
 }
 
@@ -184,27 +190,15 @@ static inline int accept_tcp_socket(char *src_host, size_t src_host_len,
 
   addrlen = sizeof(struct sockaddr_storage);
   client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen);
-
-  if (src_host_len > 0 ||
-      src_service_len > 0)  // If one of the things is wanted. If you give a null pointer
-                            // with a positive _len parameter, you won't get the address.
-  {
-      if (flags == LIBSOCKET_NUMERIC) {
-          flags = NI_NUMERICHOST | NI_NUMERICSERV;
-      } else {
-          flags = 0;  // To prevent errors: Unknown flags are ignored
-      }
-  }
   return client_sfd;
 }
 
-static inline ssize_t c_send(int sfd, char* buf, size_t size, const char* host, 
+static inline ssize_t c_send(const char* buf, size_t size, const char* host, 
                const char* service) {
   struct sockaddr_storage oldsock;
   struct addrinfo *result, *result_check, hint;
   socklen_t oldsocklen;
   int return_value;
-  void* buff = buf;
 
   oldsocklen = sizeof(struct sockaddr_storage);
   getsockname(sfd, (struct sockaddr *)&oldsock, (socklen_t *)&oldsocklen);
@@ -215,10 +209,11 @@ static inline ssize_t c_send(int sfd, char* buf, size_t size, const char* host,
     result_check = result_check->ai_next;
 
   if (-1 != (return_value = sendto(
-    sfd, buff, size, 0, result_check->ai_addr,
+    sfd, buf, size, 0, result_check->ai_addr,
     result_check->ai_addrlen
   )))
     freeaddrinfo(result);
+  hook.data_sent = 1;
   return return_value;
 }
 
@@ -228,7 +223,6 @@ static inline ssize_t c_receive(char* buffer, size_t size,
   struct sockaddr_storage client;
   socklen_t stor_addrlen;
   ssize_t bytes;
-  void* buff = buffer;
 
   /* check if using TCP and if it can accept data */
   if (hook.use_tcp == 1) 
@@ -243,8 +237,9 @@ static inline ssize_t c_receive(char* buffer, size_t size,
     memset(src_service, 0, src_service_len);
 
   stor_addrlen = sizeof(struct sockaddr_storage);
+  hook.data_received = 1;
 
-  return recvfrom(sfd, buff, size, 
+  return recvfrom(sfd, buffer, size, 
          0, (struct sockaddr *)&client, 
          &stor_addrlen);
 }
@@ -304,10 +299,11 @@ static int c_shutdown() {
 int c_tick() {
   if (hook.socket_connected == 0 && hook.close_socket == 0 && hook.shutdown_socket == 0) 
     c_start(hook.socket_address, hook.socket_port);
-  if (strcmp(hook.message, "") != 0 && hook.socket_connected == 1)
-    c_send(sfd, hook.message, strlen(hook.message), hook.socket_address, hook.socket_port);
-/* if (hook.socket_connected == 1)
-    c_receive(sfd, char *buffer, size_t size, char *src_host, size_t src_host_len, char *src_service, size_t src_service_len); */
+  if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
+    c_send(hook.sent_message, strlen(hook.sent_message), hook.socket_address, hook.socket_port);
+  if (hook.socket_connected == 1 && hook.data_sent == 1 && hook.data_received == 0)
+    c_receive(hook.received_message, strlen(hook.received_message), hook.external_address, 
+              strlen(hook.external_address), hook.external_port, strlen(hook.external_port));
 
   if (hook.close_socket == 1)
     c_close();
