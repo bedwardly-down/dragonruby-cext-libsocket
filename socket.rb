@@ -55,27 +55,11 @@ include FFI::SOCKET
 #     c_hook.write - a send process is being shutdown
 #
 class Socket
-  attr_accessor :socket, :config, :args
+  attr_accessor :args
 
-  # definitions for these variables
-  #
-  # socket - the socket object created by the all the scary C code; you probably won't touch this at all
-  # config - need to change something optional, do it here; you most likely won't care about this at all
-  #
-
-  def initialize
-    self.socket ||= 0
-    self.config ||= {
-      host: "127.0.0.1",
-      port: "8000",
-      message: ""
-    }
-  end
-
-  def initialize args, address, port
-    @config.host = address
-    @config.port = port
-    @args = args
+  def initialize address, port
+    c_hook.socket_address = address;
+    c_hook.socket_port = port;
   end
 
   # where the scary C-API tick method lives; it's not tied directly to DR tick_count
