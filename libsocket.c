@@ -78,6 +78,9 @@ typedef struct C_Hooks {
   unsigned int use_ipv4 : 1;
   unsigned int close_socket : 1;
   unsigned int shutdown_socket : 1;
+  char* socket_address;
+  char* socket_port;
+  char* message;
 } C_Hooks;
 
 /* static variables go here */
@@ -127,6 +130,9 @@ static inline int defaults() {
   hook.use_ipv4 = 0;
   hook.close_socket = 0;
   hook.shutdown_socket = 0;
+  hook.socket_address = "";
+  hook.socket_port = "";
+  hook.message = "";
   return 0;
 }
 
@@ -143,7 +149,7 @@ static inline int dispose() {
   return 0;
 }
 
-int c_start(const char *bind_addr, const char *bind_port,  int flags) {
+static int start(const char *bind_addr, const char *bind_port) {
   int sfd, domain, type, retval;
   struct addrinfo hints;
   error.trigger = "start";
@@ -161,11 +167,8 @@ int c_start(const char *bind_addr, const char *bind_port,  int flags) {
   check_error(WSAStartup(MAKEWORD(2, 2), &d));
 #endif
 
-  /* check if address and port are configured correctly */
-  check_error(bind_addr == NULL || bind_port == NULL);
-
   /* check what protocol to use */
-  if (hook.protocol == 0) type = SOCK_DGRAM;
+  if (hook.use_tcp == 0) type = SOCK_DGRAM;
   else type = SOCK_STREAM;
 
   /* allocate memory for socket */
@@ -177,7 +180,7 @@ int c_start(const char *bind_addr, const char *bind_port,  int flags) {
   hints.ai_flags = AI_PASSIVE;
 
   /* make sure the return value is completely empty */
-  check_error(retval = getaddrinfo(bind_addr, bind_port, &hints, &result));
+  retval = getaddrinfo(bind_addr, bind_port, &hints, &result);
 
   result_check = result;
 
@@ -185,27 +188,20 @@ int c_start(const char *bind_addr, const char *bind_port,  int flags) {
   if (result_check != NULL) 
     result_check = result_check->ai_next;
   
-  sfd = check_error(socket(result_check->ai_family, 
-                           result_check->ai_socktype | flags, result_check->ai_protocol));
+  sfd = socket(result_check->ai_family, 
+               result_check->ai_socktype | flags, result_check->ai_protocol);
 
   retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
 
-  if (type == SOCK_STREAM) retval = check_error(listen(sfd, LIBSOCKET_BACKLOG));
+  if (type == SOCK_STREAM) retval = listen(sfd, LIBSOCKET_BACKLOG);
 
   if (retval != 0) {
     c_close(sfd);
   }
 
-  /* final check */
-  if (result_check == NULL) {
-    freeaddrinfo(result);
-    hook.error = 1;
-    return -1;
-  }
-
   /* we have socket creation */
   freeaddrinfo(result);
-  hook.connected = 1;
+  hook.socket_connected = 1;
   return sfd;
 }
 
@@ -368,6 +364,7 @@ int c_shutdown(int sfd) {
 }
 
 int c_tick() {
+  if (hook.socket_connected == 0) start(hook.server_host, hook.server_port);
   return 0;
 }
 

@@ -259,6 +259,10 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_method(state, C_HooksClass, "use_ipv4=", drb_ffi__ZTS7C_Hooks_use_ipv4_Set, MRB_ARGS_REQ(1));
     drb_api->mrb_define_method(state, C_HooksClass, "close_socket", drb_ffi__ZTS7C_Hooks_close_socket_Get, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, C_HooksClass, "close_socket=", drb_ffi__ZTS7C_Hooks_close_socket_Set, MRB_ARGS_REQ(1));
-    drb_api->mrb_define_method(state, C_HooksClass, "shutdown_socket", drb_ffi__ZTS7C_Hooks_shutdown_socket_Get, MRB_ARGS_REQ(0));
-    drb_api->mrb_define_method(state, C_HooksClass, "shutdown_socket=", drb_ffi__ZTS7C_Hooks_shutdown_socket_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, C_HooksClass, "socket_host", drb_ffi__ZTS7C_Hooks_socket_host_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, C_HooksClass, "socket_host=", drb_ffi__ZTS7C_Hooks_socket_host_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, C_HooksClass, "socket_port", drb_ffi__ZTS7C_Hooks_socket_port_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, C_HooksClass, "socket_port=", drb_ffi__ZTS7C_Hooks_socket_port_Set, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_method(state, C_HooksClass, "message", drb_ffi__ZTS7C_Hooks_message_Get, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_method(state, C_HooksClass, "message=", drb_ffi__ZTS7C_Hooks_message_Set, MRB_ARGS_REQ(1));
 }

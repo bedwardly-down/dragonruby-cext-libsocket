@@ -55,7 +55,7 @@ include FFI::SOCKET
 #     c_hook.write - a send process is being shutdown
 #
 class Socket
-  attr_accessor :socket, :config, :error, :c_api
+  attr_accessor :socket, :config, :args
 
   # definitions for these variables
   #
@@ -68,62 +68,14 @@ class Socket
     self.config ||= {
       host: "127.0.0.1",
       port: "8000",
-
-      # flags and receive_flags are only important if you need them tune only a Linux game client
-      # if in doubt, leave at 0; see here for more information:
-      #       https://www.man7.org/linux/man-pages/man2/socket.2.html
-      flags: 0, # flags for this socket
-      receive_flags: 0 # flags to better help a socket interact with this socket 
+      message: ""
     }
   end
 
-  # place this after running Socket.new to start a socket connection but not actually connect yet
-  #
-  # @param (string) address - IP or URL you want to connect to. Examples: "121.254.0.1" or "google.com"
-  # @param (string) port - The port number. Example: "8000"
-  def start address, port
+  def initialize args, address, port
     @config.host = address
     @config.port = port
-    @socket = c_start @config.host, @config.port, @config.flags
-  end
-
-  # to start talking and listening, first make sure this is active
-  #
-  # no params
-  def open
-    c_open @socket, @config.host, @config.port
-  end
-
-  # what you do when you are done connecting but may want to start up later
-  #
-  # no params
-  def close
-    c_close @socket
-  end
-
-  # send a message over the socket
-  #
-  # @param (string) message - whatever you want the other instance to receive
-  def send message
-    c_send @socket, message, message.length, @config.host, @config.port, @config.flags
-  end
-
-  # receive a message from the other socket
-  #
-  # @param (string) sender_address - IP address or URL that you want to listen for
-  # @param (string) sender_port - what port you want to hear from them on
-  def receive message, sender_address, sender_port
-    c_receive @socket, message, message.length, sender_address, sender_address.length, sender_port, sender_port.length, @config.receive_flags
-  end
-
-  # where sockets go to die and never return
-  # if you need to reconnect, use the close and open functions instead
-  #
-  # NOTE: Destroying this DragonRuby Socket object needs to be manually done or you could end up with a 
-  #       possible memory leak in larger scenarios when opening multiple sockets. The C-API doesn't handle 
-  #       that directly due to this being an extension
-  def shutdown
-    c_shutdown @socket
+    @args = args
   end
 
   # where the scary C-API tick method lives; it's not tied directly to DR tick_count
