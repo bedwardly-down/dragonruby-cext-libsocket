@@ -87,7 +87,7 @@ typedef struct Hooks {
 } Hooks;
 
 /* static variables go here */
-static Hooks hook;
+static Hooks hook, *hook_ptr;
 static int sfd, tick_count;
 
 /* define various functions here */
@@ -141,10 +141,10 @@ static inline int c_start(int tick) {
 
   /* make sure the Hooks struct is initialized before doing anything else here using a variable that */
   /* should be NULL only the beginning if HOOKS hasn't been initialized yet */
-  if (hook.external_address == NULL) {
+  /*if (hook_ptr->external_address == NULL) {
     c_defaults();
     return -1;
-  }
+  }*/
 
   /* required steps to get a socket going before normal Socket creation */
   memset(&hint, 0, sizeof(struct addrinfo)); /* allocate memory for the hint struct */
@@ -158,8 +158,8 @@ static inline int c_start(int tick) {
   hint.ai_flags = flags;
 #endif
 
-  if (0 != (return_value = getaddrinfo(hook.socket_address, hook.socket_port, &hint, &result))) {
-    hook.error_thrown = 1;
+  if (0 != (return_value = getaddrinfo(hook_ptr->socket_address, hook_ptr->socket_port, &hint, &result))) {
+    hook_ptr->error_thrown = 1;
     return -1;
   }
 
@@ -194,12 +194,12 @@ static inline int c_start(int tick) {
   }
 
   if (result_check == NULL) {
-    hook.error_thrown = 1;
+    hook_ptr->error_thrown = 1;
     return -1;
   }
 
   if (cont == 2) {
-    hook.socket_connected = 1;
+    hook_ptr->socket_connected = 1;
     freeaddrinfo(result);
   }
   return sfd;
@@ -322,7 +322,7 @@ static int c_shutdown() {
 
 int c_tick(int tick) {
   if (tick_count == 0) tick_count = tick; /* only pass tick to tick_count if it's empty */
-  if ((hook.socket_connected + hook.close_socket + hook.shutdown_socket) == 0) 
+  if ((hook_ptr->socket_connected + hook_ptr->close_socket + hook_ptr->shutdown_socket) == 0) 
     c_start(tick);
   /*if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
     c_send(hook.sent_message, strlen(hook.sent_message), hook.socket_address, hook.socket_port);
@@ -338,5 +338,6 @@ int c_tick(int tick) {
 }
 
 Hooks c_hook() {
+  hook_ptr = &hook;
   return hook;
 }
