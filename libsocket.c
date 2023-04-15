@@ -88,11 +88,11 @@ typedef struct Hooks {
 
 /* static variables go here */
 static Hooks hook;
-static int sfd, iter;
+static int sfd, tick_count;
 
 /* define various functions here */
 static int c_open();
-static int c_close();
+static int c_close(int socket);
 static int c_shutdown();
 int c_tick(int tick);
 
@@ -130,8 +130,8 @@ static inline int c_dispose() {
   return 0;
 }
 
-static inline int c_start(const char* bind_address, const char* bind_port) {
-  int return_value;
+static inline int c_start(const char* bind_address, const char* bind_port, int tick) {
+  int return_value, cont, flags;
   struct addrinfo *result, *result_check, hint;
 
 #ifdef _WIN32
@@ -153,11 +153,57 @@ static inline int c_start(const char* bind_address, const char* bind_port) {
   }
 
   /* required steps to get a socket going before normal Socket creation */
-  memset(&hint, 0, sizeof hint); /* allocate memory for the hint struct */
+  memset(&hint, 0, sizeof(struct addrinfo)); /* allocate memory for the hint struct */
   hint.ai_socktype = SOCK_STREAM;
   hint.ai_family = AF_UNSPEC;
 
-  hook.socket_connected = 1;
+#if defined(linux)
+  flags = SOCK_NONBLOCK;
+  hint.ai_flags = flags;
+#endif
+
+  if (0 != (return_value = getaddrinfo(bind_address, bind_port, &hint, &result))) {
+    hook.error_thrown = 1;
+    return -1;
+  }
+
+  /* iterate with the DragonRuby tick_count */
+  result_check = result;
+  if (result_check != NULL) {
+    if (tick_count != tick) {
+      result_check = result_check->ai_next;
+    }
+
+    sfd = socket(result_check->ai_family, result_check->ai_socktype | flags,
+                 result_check->ai_protocol);
+    if (sfd < 0) {
+      cont++;
+    }
+
+    if (cont > 0) {
+      int CON_RES = connect(sfd, result_check->ai_addr,
+                                result_check->ai_addrlen);
+      if ((CON_RES != -1) || (CON_RES == -1 &&
+#if defined(_WIN32)
+         ((WSAGetLastError() == WSAEINPROGRESS) || (WSAGetLastError() == WSAEALREADY) || (WSAGetLastError() == WSAEINTR))))
+#else
+         (flags |= SOCK_NONBLOCK) &&
+        ((errno == EINPROGRESS) || (errno == EALREADY) || (errno == EINTR))))    // connected without error, or, connected with errno being one of these important states
+#endif
+           cont++;
+        c_close(sfd);
+      }
+  }
+
+  if (result_check == NULL) {
+    hook.error_thrown = 1;
+    return -1;
+  }
+
+  if (cont == 2) {
+    hook.socket_connected = 1;
+    freeaddrinfo(result);
+  }
   return sfd;
 }
 
@@ -256,12 +302,12 @@ static int c_open() {
   return 0;
 }
 
-static int c_close() {
+static int c_close(int socket) {
   /* since this process can happen during any other process, always return step back to original state */
 #if defined(_WIN32)
-  closesocket(sfd);
+  closesocket(socket);
 #elif defined(linux) || defined(__APPLE__)
-  close(sfd);
+  close(socket);
 #endif
   return 0;
 }
@@ -277,8 +323,9 @@ static int c_shutdown() {
 }
 
 int c_tick(int tick) {
+  if (tick_count == 0) tick_count = tick; /* only pass tick to tick_count if it's empty */
   if ((hook.socket_connected + hook.close_socket + hook.shutdown_socket) == 0) 
-    c_start(hook.socket_address, hook.socket_port);
+    c_start(hook.socket_address, hook.socket_port, tick);
   /*if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
     c_send(hook.sent_message, strlen(hook.sent_message), hook.socket_address, hook.socket_port);
   if (hook.socket_connected == 1 && hook.data_sent == 1 && hook.data_received == 0)

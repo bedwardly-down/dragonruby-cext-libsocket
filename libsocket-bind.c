@@ -386,7 +386,7 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     struct RClass *FFI = drb_api->mrb_module_get(state, "FFI");
     struct RClass *module = drb_api->mrb_define_module_under(state, FFI, "SOCKET");
     struct RClass *object_class = state->object_class;
-    drb_api->mrb_define_module_function(state, module, "c_tick", drb_ffi_c_tick_Binding, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_module_function(state, module, "c_tick", drb_ffi_c_tick_Binding, MRB_ARGS_REQ(1));
     drb_api->mrb_define_module_function(state, module, "c_hook", drb_ffi_c_hook_Binding, MRB_ARGS_REQ(0));
     struct RClass *CharPointerClass = drb_api->mrb_define_class_under(state, module, "CharPointer", object_class);
     drb_api->mrb_define_class_method(state, CharPointerClass, "new", drb_ffi__ZTSPc_New, MRB_ARGS_REQ(0));
