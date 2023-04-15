@@ -380,6 +380,17 @@ static mrb_value drb_ffi_c_hook_Binding(mrb_state *state, mrb_value value) {
     Hooks ret_val = c_hook();
     return drb_ffi__ZTS5Hooks_ToRuby(state, ret_val);
 }
+static mrb_value drb_ffi_c_init_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 2)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_init': wrong number of arguments (%d for 2)", argc);
+    char* address_0 = drb_ffi__ZTSPc_FromRuby(state, args[0]);
+    char* port_1 = drb_ffi__ZTSPc_FromRuby(state, args[1]);
+    int ret_val = c_init(address_0, port_1);
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
 DRB_FFI_EXPORT
 void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api) {
     drb_api = api;
@@ -388,6 +399,7 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     struct RClass *object_class = state->object_class;
     drb_api->mrb_define_module_function(state, module, "c_tick", drb_ffi_c_tick_Binding, MRB_ARGS_REQ(1));
     drb_api->mrb_define_module_function(state, module, "c_hook", drb_ffi_c_hook_Binding, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_module_function(state, module, "c_init", drb_ffi_c_init_Binding, MRB_ARGS_REQ(2));
     struct RClass *CharPointerClass = drb_api->mrb_define_class_under(state, module, "CharPointer", object_class);
     drb_api->mrb_define_class_method(state, CharPointerClass, "new", drb_ffi__ZTSPc_New, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, CharPointerClass, "value", drb_ffi__ZTSPc_GetValue, MRB_ARGS_REQ(0));

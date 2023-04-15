@@ -130,6 +130,19 @@ static inline int c_dispose() {
   return 0;
 }
 
+/**
+ *
+ * @brief initialize struct on DragonRuby Socket.rb initialize and fill with the socket address and port
+ *
+ */
+int c_init(char* address, char* port) {
+  memset(&hook, 0, sizeof(struct Hooks));
+  hook_ptr = &hook;
+  hook_ptr->socket_address = address;
+  hook_ptr->socket_port = port;
+  return 0;
+}
+
 static inline int c_start(int tick) {
   int return_value, cont, flags;
   struct addrinfo *result, *result_check, hint;
@@ -138,13 +151,6 @@ static inline int c_start(int tick) {
   WSADATA d;
   WSAStartup(MAKEWORD(2, 2), &d);
 #endif
-
-  /* make sure the Hooks struct is initialized before doing anything else here using a variable that */
-  /* should be NULL only the beginning if HOOKS hasn't been initialized yet */
-  /*if (hook_ptr->external_address == NULL) {
-    c_defaults();
-    return -1;
-  }*/
 
   /* required steps to get a socket going before normal Socket creation */
   memset(&hint, 0, sizeof(struct addrinfo)); /* allocate memory for the hint struct */
@@ -205,18 +211,6 @@ static inline int c_start(int tick) {
   return sfd;
 }
 
-static inline int accept_tcp_socket(char *src_host, size_t src_host_len,
-                      char *src_service, size_t src_service_len,
-                      int flags) {
-  struct sockaddr_storage client_info;
-  int client_sfd;
-  socklen_t addrlen;
-
-  addrlen = sizeof(struct sockaddr_storage);
-  client_sfd = accept(sfd, (struct sockaddr *)&client_info, &addrlen);
-  return client_sfd;
-}
-
 static inline ssize_t c_send(const char* buf, size_t size, const char* host, 
                const char* service) {
   struct sockaddr_storage oldsock;
@@ -237,7 +231,7 @@ static inline ssize_t c_send(const char* buf, size_t size, const char* host,
     result_check->ai_addrlen
   )))
     freeaddrinfo(result);
-  hook.data_sent = 1;
+  hook_ptr->data_sent = 1;
   return return_value;
 }
 
@@ -248,10 +242,6 @@ static inline ssize_t c_receive(char* buffer, size_t size,
   socklen_t stor_addrlen;
   ssize_t bytes;
 
-  /* check if using TCP and if it can accept data */
-  if (hook.use_tcp == 1) 
-    accept_tcp_socket(src_host, src_host_len, src_service, src_service_len, (NI_NUMERICHOST | NI_NUMERICSERV));
-
   memset(buffer, 0, size);
 
   if (src_host)
@@ -261,7 +251,7 @@ static inline ssize_t c_receive(char* buffer, size_t size,
     memset(src_service, 0, src_service_len);
 
   stor_addrlen = sizeof(struct sockaddr_storage);
-  hook.data_received = 1;
+  hook_ptr->data_received = 1;
 
   return recvfrom(sfd, buffer, size, 
          0, (struct sockaddr *)&client, 
@@ -284,7 +274,7 @@ static int c_open() {
 
   hint.ai_family = ((struct sockaddr_in *)&oldsockaddr)->sin_family;
   hint.ai_socktype = SOCK_DGRAM;
-  return_value = getaddrinfo(hook.socket_address, hook.socket_port, &hint, &result);
+  return_value = getaddrinfo(hook_ptr->socket_address, hook_ptr->socket_port, &hint, &result);
 
   result_check = result;
   if (result_check != NULL)
@@ -324,20 +314,19 @@ int c_tick(int tick) {
   if (tick_count == 0) tick_count = tick; /* only pass tick to tick_count if it's empty */
   if ((hook_ptr->socket_connected + hook_ptr->close_socket + hook_ptr->shutdown_socket) == 0) 
     c_start(tick);
-  /*if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
-    c_send(hook.sent_message, strlen(hook.sent_message), hook.socket_address, hook.socket_port);
-  if (hook.socket_connected == 1 && hook.data_sent == 1 && hook.data_received == 0)
-    c_receive(hook.received_message, strlen(hook.received_message), hook.external_address, 
-              strlen(hook.external_address), hook.external_port, strlen(hook.external_port));
+  /*if (strcmp(hook_ptr->sent_message, "") != 0 && hook_ptr->socket_connected == 1 && hook_ptr->data_sent == 0)
+    c_send(hook_ptr->sent_message, strlen(hook_ptr->sent_message), hook_ptr->socket_address, hook_ptr->socket_port);
+  if (hook_ptr->socket_connected == 1 && hook_ptr->data_sent == 1 && hook_ptr->data_received == 0)
+    c_receive(hook_ptr->received_message, strlen(hook_ptr->received_message), hook_ptr->external_address, 
+              strlen(hook_ptr->external_address), hook_ptr->external_port, strlen(hook_ptr->external_port));
 
-  if (hook.close_socket == 1)
+  if (hook_ptr->close_socket == 1)
     c_close();
-  if (hook.shutdown_socket == 1)
+  if (hook_ptr->shutdown_socket == 1)
     c_shutdown();*/
   return 0;
 }
 
 Hooks c_hook() {
-  hook_ptr = &hook;
   return hook;
 }
