@@ -187,7 +187,9 @@ static inline int c_start(const char* bind_address, const char* bind_port, int t
 #if defined(_WIN32)
          ((WSAGetLastError() == WSAEINPROGRESS) || (WSAGetLastError() == WSAEALREADY) || (WSAGetLastError() == WSAEINTR))))
 #else
+#if defined (linux)
          (flags |= SOCK_NONBLOCK) &&
+#endif
         ((errno == EINPROGRESS) || (errno == EALREADY) || (errno == EINTR))))    // connected without error, or, connected with errno being one of these important states
 #endif
            cont++;
