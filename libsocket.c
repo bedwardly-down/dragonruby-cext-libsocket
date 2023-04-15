@@ -130,7 +130,7 @@ static inline int c_dispose() {
   return 0;
 }
 
-static inline int c_start(const char* bind_address, const char* bind_port, int tick) {
+static inline int c_start(int tick) {
   int return_value, cont, flags;
   struct addrinfo *result, *result_check, hint;
 
@@ -146,31 +146,27 @@ static inline int c_start(const char* bind_address, const char* bind_port, int t
     return -1;
   }
 
-  /* just to make sure one last time */
-  if (bind_address == NULL || bind_port == NULL) {
-    hook.error_thrown = 1;
-    return -1;
-  }
-
   /* required steps to get a socket going before normal Socket creation */
   memset(&hint, 0, sizeof(struct addrinfo)); /* allocate memory for the hint struct */
+
   hint.ai_socktype = SOCK_STREAM;
   hint.ai_family = AF_UNSPEC;
+  hint.ai_protocol = 0;
 
 #if defined(linux)
   flags = SOCK_NONBLOCK;
   hint.ai_flags = flags;
 #endif
 
-  if (0 != (return_value = getaddrinfo(bind_address, bind_port, &hint, &result))) {
+  if (0 != (return_value = getaddrinfo(hook.socket_address, hook.socket_port, &hint, &result))) {
     hook.error_thrown = 1;
     return -1;
   }
 
   /* iterate with the DragonRuby tick_count */
-  result_check = result;
-  if (result_check != NULL) {
-    if (tick_count != tick) {
+  if (tick_count != tick) {
+    result_check = result;
+    if (result_check != NULL) {
       result_check = result_check->ai_next;
     }
 
@@ -327,7 +323,7 @@ static int c_shutdown() {
 int c_tick(int tick) {
   if (tick_count == 0) tick_count = tick; /* only pass tick to tick_count if it's empty */
   if ((hook.socket_connected + hook.close_socket + hook.shutdown_socket) == 0) 
-    c_start(hook.socket_address, hook.socket_port, tick);
+    c_start(tick);
   /*if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
     c_send(hook.sent_message, strlen(hook.sent_message), hook.socket_address, hook.socket_port);
   if (hook.socket_connected == 1 && hook.data_sent == 1 && hook.data_received == 0)
