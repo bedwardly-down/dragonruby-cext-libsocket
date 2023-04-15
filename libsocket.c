@@ -88,13 +88,13 @@ typedef struct Hooks {
 
 /* static variables go here */
 static Hooks hook;
-static int sfd;
+static int sfd, iter;
 
 /* define various functions here */
 static int c_open();
 static int c_close();
 static int c_shutdown();
-int c_tick();
+int c_tick(int tick);
 
 /**
  *
@@ -130,53 +130,33 @@ static inline int c_dispose() {
   return 0;
 }
 
-static inline int c_start(const char *bind_addr, const char *bind_port) {
-  int sfd, domain, type, retval;
-  struct addrinfo *result, *result_check, hints;
+static inline int c_start(const char* bind_address, const char* bind_port) {
+  int return_value;
+  struct addrinfo *result, *result_check, hint;
 
 #ifdef _WIN32
   WSADATA d;
-#endif
-
-  c_defaults();
-#ifdef _WIN32
   WSAStartup(MAKEWORD(2, 2), &d);
 #endif
 
-  /* check what protocol to use */
-  if (hook.use_tcp == 0) type = SOCK_DGRAM;
-  else type = SOCK_STREAM;
-
-  /* allocate memory for socket */
-  memset(&hints, 0, sizeof(struct addrinfo));
-
-  /* fill in hints */
-  hints.ai_socktype = type;
-  hints.ai_family = domain;
-  hints.ai_flags = AI_PASSIVE;
-
-  /* make sure the return value is completely empty */
-  retval = getaddrinfo(bind_addr, bind_port, &hints, &result);
-
-  result_check = result;
-
-  /* go through the linked list of struct addrinfo elements */
-  if (result_check != NULL) 
-    result_check = result_check->ai_next;
-  
-  sfd = socket(result_check->ai_family, 
-               result_check->ai_socktype, result_check->ai_protocol);
-
-  retval = bind(sfd, result_check->ai_addr, (socklen_t)result_check->ai_addrlen);
-
-  if (type == SOCK_STREAM) retval = listen(sfd, LIBSOCKET_BACKLOG);
-
-  if (retval != 0) {
-    close(sfd);
+  /* make sure the Hooks struct is initialized before doing anything else here using a variable that */
+  /* should be NULL only the beginning if HOOKS hasn't been initialized yet */
+  if (hook.external_address == NULL) {
+    c_defaults();
+    return -1;
   }
 
-  /* we have socket creation */
-  freeaddrinfo(result);
+  /* just to make sure one last time */
+  if (bind_address == NULL || bind_port == NULL) {
+    hook.error_thrown = 1;
+    return -1;
+  }
+
+  /* required steps to get a socket going before normal Socket creation */
+  memset(&hint, 0, sizeof hint); /* allocate memory for the hint struct */
+  hint.ai_socktype = SOCK_STREAM;
+  hint.ai_family = AF_UNSPEC;
+
   hook.socket_connected = 1;
   return sfd;
 }
@@ -296,10 +276,10 @@ static int c_shutdown() {
   return 0;
 }
 
-int c_tick() {
-  if (hook.socket_connected == 0 && hook.close_socket == 0 && hook.shutdown_socket == 0) 
+int c_tick(int tick) {
+  if ((hook.socket_connected + hook.close_socket + hook.shutdown_socket) == 0) 
     c_start(hook.socket_address, hook.socket_port);
-  if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
+  /*if (strcmp(hook.sent_message, "") != 0 && hook.socket_connected == 1 && hook.data_sent == 0)
     c_send(hook.sent_message, strlen(hook.sent_message), hook.socket_address, hook.socket_port);
   if (hook.socket_connected == 1 && hook.data_sent == 1 && hook.data_received == 0)
     c_receive(hook.received_message, strlen(hook.received_message), hook.external_address, 
@@ -308,7 +288,7 @@ int c_tick() {
   if (hook.close_socket == 1)
     c_close();
   if (hook.shutdown_socket == 1)
-    c_shutdown();
+    c_shutdown();*/
   return 0;
 }
 

@@ -38,34 +38,30 @@ include FFI::SOCKET
 
 # C-API Endpoints for interacting with the underlying C library
 #
-# c_error - need to know why something failed under the hood or need to check for a specific error, use this
-#         main error handling and processing are up to you to do. This will just give you all you need for that
-#     c_error.code - system error code; see the official documentation for the platform for more info
-#     c_error.message - system error information in a human readable format
-#     c_error.trigger - which function caused the failure
-#
 # c_hook - need to check the state of the underlying library or tell it to do stuff without touching C? use this
-#     c_hook.connected - is the socket connected? 0 - false; 1 - true
-#     c_hook.kill - socket waiting to shutdown or in the process of
-#     c_hook.error - was an error thrown - use this to check
-#     c_hook.protocol - 0 UDP 1 TCP - only use if you need a TCP socket created
-#     c_hook.ipv4 - use a normal IP connection (default - use whichever one is better for current customer's network)
-#     c_hook.ipv6 - use the cooler, newer IP connection but not supported on all individual computers (default - use whichever one is better for current customer's network)
-#     c_hook.read - a receive process is being shutdown
-#     c_hook.write - a send process is being shutdown
+#     c_hook.socket_connected - is the socket connected?
+#     c_hook.error_thrown - mostly check if early processes error out; once TCP socket is connected, errors will essentially kill everything
+#     c_hook.data_sent - data was sent to external server (probably applicable to only UDP)
+#     c_hook.date_received - data was received from external server (probably applicable to only UDP)
+#     c_hook.use_tcp - long-term, I want to default to UDP for game development but right now, won't worry too much about this
+#     c_hook.use_ipv4 - default to using whichever IP spec makes the most sense (TCP); default to IPv6 for UDP
+#     c_hook.close_socket - close a TCP socket on next tick but don't destroy the connection altogether
+#     c_hook.shutdown_socket - fully destroy a TCP socket; in testing, this may fully kill off the DragonRuby dev-server. Should be mostly used as a kill switch
+#     c_hook.socket_address - the address you want to connect to (string only or you'll crash DR)
+#     c_hook.socket_port - the port you want to connect to (string only or you'll crash DR)
+#     c_hook.sent_message - the message you want to send to the socket
+#     c_hook.external_address - the address of the server sending data back (probably only useful for UDP)
+#     c_hook.external_port - the port of the server sending data back (same UDP caveat)
+#     c_hook.received_message - the message received from the external_sever; probably something that should only be hooked to for debug purposes (same UDP caveat)
 #
 class Socket
-  attr_accessor :args
-
   def initialize address, port
     c_hook.socket_address = address;
     c_hook.socket_port = port;
   end
 
-  # where the scary C-API tick method lives; it's not tied directly to DR tick_count
-  # due to not all processes in a network situation always finishing on time
-  # nothing it does should be touched by you unless you know what you're doing
-  def tick
-    c_tick
+  # tick_count should be passed to c_tick so it can be used for calculations and internal iterations that are required
+  def tick args
+    c_tick args.state.tick_count
   end
 end

@@ -365,9 +365,10 @@ static mrb_value drb_ffi_c_tick_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
-    if (argc != 0)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_tick': wrong number of arguments (%d for 0)", argc);
-    int ret_val = c_tick();
+    if (argc != 1)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_tick': wrong number of arguments (%d for 1)", argc);
+    int tick_0 = drb_ffi__ZTSi_FromRuby(state, args[0]);
+    int ret_val = c_tick(tick_0);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 static mrb_value drb_ffi_c_hook_Binding(mrb_state *state, mrb_value value) {
