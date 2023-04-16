@@ -44,17 +44,10 @@
 #     c_hook.use_ipv4 - default to using whichever IP spec makes the most sense (TCP); default to IPv6 for UDP
 #     c_hook.close_socket - close a TCP socket on next tick but don't destroy the connection altogether
 #     c_hook.shutdown_socket - fully destroy a TCP socket; in testing, this may fully kill off the DragonRuby dev-server. Should be mostly used as a kill switch
-#     c_hook.socket_address - the address you want to connect to (string only or you'll crash DR)
-#     c_hook.socket_port - the port you want to connect to (string only or you'll crash DR)
-#     c_hook.sent_message - the message you want to send to the socket
-#     c_hook.external_address - the address of the server sending data back (probably only useful for UDP)
-#     c_hook.external_port - the port of the server sending data back (same UDP caveat)
-#     c_hook.received_message - the message received from the external_sever; probably something that should only be hooked to for debug purposes (same UDP caveat)
 #
 class Socket
   def initialize address, port
-    c_hook.socket_address = address;
-    c_hook.socket_port = port;
+    c_init(address, port)
   end
 
   # tick_count should be passed to c_tick so it can be used for calculations and internal iterations that are required

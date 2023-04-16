@@ -46,6 +46,7 @@
 /* definitions */
 #define LIBSOCKET_BACKLOG 128  ///< Linux accepts a backlog value at listen() up to 128
 #define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
+#define MAX_BUFLEN 80
 
 /**
  * For Windows shutdown implementation compatibility
@@ -133,7 +134,7 @@ int c_init(char* address, char* port) {
 #endif
 
   /* required steps to get a socket going before normal Socket creation */
-  memset(&hint, 0, sizeof hint); /* allocate memory for the hint struct */
+  memset(&hint, 0, sizeof(struct addrinfo)); /* allocate memory for the hint struct */
 
   hint.ai_socktype = SOCK_STREAM;
   hint.ai_family = AF_UNSPEC;
@@ -174,15 +175,37 @@ int c_init(char* address, char* port) {
   return sfd;
 }
 
-static inline ssize_t c_send(const char* buf, size_t size, const char* host, 
-               const char* service) {
-  return 0;
+/* bind_address and bind_port required for UDP later on but not needed for TCP */
+ssize_t c_send(const char* buf) {
+  int return_value;
+  struct msghdr *msg;
+
+  if (-1 != (return_value = send(
+    sfd, buf, strlen(buf), 0
+  ))) {
+    //freeaddrinfo(result);
+  } else {
+    hook.error_thrown = 1;
+    return -1;
+  }
+  hook.data_sent = 1;
+  return return_value;
 }
 
-static inline ssize_t c_receive(char* buffer, size_t size,
-                  char* src_host, size_t src_host_len,
-                  char* src_service, size_t src_service_len) {
-  return 0;
+ssize_t c_receive() {
+  ssize_t bytes;
+  char buf[MAX_BUFLEN];
+  if (-1 != (bytes = recv(
+    sfd, buf, strlen(buf), 0
+  ))) {
+
+  } else {
+    hook.error_thrown = 1;
+    return -1;
+  }
+  hook.data_received = 1;
+  puts(buf);
+  return bytes;
 }
 
 static int c_open() {

@@ -289,6 +289,25 @@ static mrb_value drb_ffi__ZTS5Hooks_shutdown_socket_Set(mrb_state *state, mrb_va
     (&((struct drb_foreign_object_ZTS5Hooks *)DATA_PTR(self))->value)->shutdown_socket = new_value;
     return mrb_nil_value();
 }
+static mrb_value drb_ffi_c_send_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 1)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_send': wrong number of arguments (%d for 3)", argc);
+    char *buf = drb_ffi__ZTSPc_FromRuby(state, args[0]);
+    ssize_t ret_val = c_send(buf);
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
+static mrb_value drb_ffi_c_receive_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 0)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_send': wrong number of arguments (%d for 3)", argc);
+    ssize_t ret_val = c_receive();
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
 static mrb_value drb_ffi_c_tick_Binding(mrb_state *state, mrb_value value) {
     mrb_value *args = 0;
     mrb_int argc = 0;
@@ -328,6 +347,8 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_module_function(state, module, "c_tick", drb_ffi_c_tick_Binding, MRB_ARGS_REQ(1));
     drb_api->mrb_define_module_function(state, module, "c_hook", drb_ffi_c_hook_Binding, MRB_ARGS_REQ(0));
     drb_api->mrb_define_module_function(state, module, "c_init", drb_ffi_c_init_Binding, MRB_ARGS_REQ(2));
+    drb_api->mrb_define_module_function(state, module, "c_send", drb_ffi_c_send_Binding, MRB_ARGS_REQ(1));
+    drb_api->mrb_define_module_function(state, module, "c_receive", drb_ffi_c_receive_Binding, MRB_ARGS_REQ(0));
     struct RClass *CharPointerClass = drb_api->mrb_define_class_under(state, module, "CharPointer", object_class);
     drb_api->mrb_define_class_method(state, CharPointerClass, "new", drb_ffi__ZTSPc_New, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, CharPointerClass, "value", drb_ffi__ZTSPc_GetValue, MRB_ARGS_REQ(0));
