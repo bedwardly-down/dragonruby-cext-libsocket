@@ -33,9 +33,6 @@
 #		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #		SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-$gtk.ffi_misc.gtk_dlopen("libsocket")
-include FFI::SOCKET
-
 # C-API Endpoints for interacting with the underlying C library
 #
 # c_hook - need to check the state of the underlying library or tell it to do stuff without touching C? use this
