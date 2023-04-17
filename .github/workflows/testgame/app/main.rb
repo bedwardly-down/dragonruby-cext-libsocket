@@ -14,7 +14,7 @@ def tick(args)
     Socket.include FFI::SOCKET
     args.state.socket = Socket.new '127.0.0.1', '7777'
     args.state.phase = :connecting
-    $gtk.write_file('dr_output', '')
+    $gtk.write_file('dr_output', 'loaded')
   end
 
   socket = args.state.socket
@@ -25,9 +25,9 @@ def tick(args)
     args.outputs.labels << { x: 640, y: 360, text: 'Connecting...', alignment_enum: 1, vertical_alignment_enum: 1 }
     args.state.phase = :send if socket.connected?
   when :send
-    $gtk.append_file('dr_output', 'connected')
+    append_to_test_output(',connected')
     socket.c_send('Hello from DR')
-    $gtk.append_file('dr_output', ',sent')
+    append_to_test_output(',sent')
     args.state.phase = :receive
   when :receive
     # TODO
@@ -35,3 +35,6 @@ def tick(args)
   end
 end
 
+def append_to_test_output(text)
+  $gtk.append_file('dr_output', text)
+end

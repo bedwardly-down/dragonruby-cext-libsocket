@@ -10,7 +10,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ./dragonruby $TESTGAME_DIR
 dr_output=$(cat $TESTGAME_DIR/dr_output)
 echo "DR Output was: $dr_output"
 
-if [ $dr_output == "connected,sent" ]; then
+if [ $dr_output == "loaded,connected,sent" ]; then
   echo "Tests finished successfully."
   exit 0
 else
