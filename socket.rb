@@ -56,8 +56,8 @@ class Socket
     c_send(message)
   end
 
-  def receive_message message
-    c_receive(message)
+  def receive_message
+    c_receive
   end
 
   def connected?
