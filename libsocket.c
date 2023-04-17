@@ -201,13 +201,16 @@ ssize_t c_receive() {
   if (hook.data_received == 1)
     hook.data_received = 0;
   if (-1 != (bytes = recv(
-    sfd, buf, strlen(buf), 0
+    sfd, buf, MAX_BUFLEN, 0
   ))) {
-
+    FILE *f = fopen("buf.txt", "w");
+    fprintf(f, "Current message: %s\n", buf);
+    fclose(f);
   } else {
     hook.error_thrown = 1;
     return -1;
   }
+
   hook.data_received = 1;
   return bytes;
 }
