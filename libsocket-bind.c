@@ -294,7 +294,7 @@ static mrb_value drb_ffi_c_send_Binding(mrb_state *state, mrb_value value) {
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 1)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_send': wrong number of arguments (%d for 3)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_send': wrong number of arguments (%d for 1)", argc);
     char *buf = drb_ffi__ZTSPc_FromRuby(state, args[0]);
     ssize_t ret_val = c_send(buf);
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
@@ -304,8 +304,37 @@ static mrb_value drb_ffi_c_receive_Binding(mrb_state *state, mrb_value value) {
     mrb_int argc = 0;
     drb_api->mrb_get_args(state, "*", &args, &argc);
     if (argc != 0)
-        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_send': wrong number of arguments (%d for 3)", argc);
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_receive': wrong number of arguments (%d for 0)", argc);
     ssize_t ret_val = c_receive();
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
+static mrb_value drb_ffi_c_close_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 0)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_close': wrong number of arguments (%d for 0)", argc);
+    int ret_val = c_close();
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
+static mrb_value drb_ffi_c_open_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 2)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_open': wrong number of arguments (%d for 2)", argc);
+    char *address = drb_ffi__ZTSPc_FromRuby(state, args[0]);
+    char *port = drb_ffi__ZTSPc_FromRuby(state, args[1]);
+    int ret_val = c_open(address, port);
+    return drb_ffi__ZTSi_ToRuby(state, ret_val);
+}
+static mrb_value drb_ffi_c_shutdown_Binding(mrb_state *state, mrb_value value) {
+    mrb_value *args = 0;
+    mrb_int argc = 0;
+    drb_api->mrb_get_args(state, "*", &args, &argc);
+    if (argc != 0)
+        drb_api->mrb_raisef(state, drb_api->drb_getargument_error(state), "'c_shutdown': wrong number of arguments (%d for 0)", argc);
+    int ret_val = c_shutdown();
     return drb_ffi__ZTSi_ToRuby(state, ret_val);
 }
 static mrb_value drb_ffi_c_tick_Binding(mrb_state *state, mrb_value value) {
@@ -349,6 +378,9 @@ void drb_register_c_extensions_with_api(mrb_state *state, struct drb_api_t *api)
     drb_api->mrb_define_module_function(state, module, "c_init", drb_ffi_c_init_Binding, MRB_ARGS_REQ(2));
     drb_api->mrb_define_module_function(state, module, "c_send", drb_ffi_c_send_Binding, MRB_ARGS_REQ(1));
     drb_api->mrb_define_module_function(state, module, "c_receive", drb_ffi_c_receive_Binding, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_module_function(state, module, "c_close", drb_ffi_c_close_Binding, MRB_ARGS_REQ(0));
+    drb_api->mrb_define_module_function(state, module, "c_open", drb_ffi_c_open_Binding, MRB_ARGS_REQ(2));
+    drb_api->mrb_define_module_function(state, module, "c_shutdown", drb_ffi_c_shutdown_Binding, MRB_ARGS_REQ(0));
     struct RClass *CharPointerClass = drb_api->mrb_define_class_under(state, module, "CharPointer", object_class);
     drb_api->mrb_define_class_method(state, CharPointerClass, "new", drb_ffi__ZTSPc_New, MRB_ARGS_REQ(0));
     drb_api->mrb_define_method(state, CharPointerClass, "value", drb_ffi__ZTSPc_GetValue, MRB_ARGS_REQ(0));

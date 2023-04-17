@@ -86,9 +86,9 @@ static Hooks hook;
 static int sfd;
 
 /* define various functions here */
-static int c_open();
-static int c_close(int socket);
-static int c_shutdown();
+int c_open(char *address, char *port);
+int c_close();
+int c_shutdown();
 int c_tick(int tick);
 
 /**
@@ -164,7 +164,7 @@ int c_init(char* address, char* port) {
         ((errno == EINPROGRESS) || (errno == EALREADY) || (errno == EINTR))))    // connected without error, or, connected with errno being one of these important states
 #endif
        break;
-    c_close(sfd);
+    c_close();
   }
 
   if (result_check == NULL) {
@@ -208,21 +208,23 @@ ssize_t c_receive() {
   return bytes;
 }
 
-static int c_open() {
+int c_open(char *address, char *port) {
+  c_init(address, port);
   return 0;
 }
 
-static int c_close(int socket) {
+int c_close() {
   /* since this process can happen during any other process, always return step back to original state */
 #if defined(_WIN32)
-  closesocket(socket);
+  closesocket(sfd);
 #elif defined(linux) || defined(__APPLE__)
-  close(socket);
+  close(sfd);
 #endif
+  hook.socket_connected = 0;
   return 0;
 }
 
-static int c_shutdown() {
+int c_shutdown() {
   shutdown(sfd, SHUT_RD);
   shutdown(sfd, SHUT_WR);
 #ifdef _WIN32

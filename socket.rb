@@ -38,8 +38,10 @@
 # c_hook - need to check the state of the underlying library or tell it to do stuff without touching C? use this
 #     c_hook.socket_connected - is the socket connected?
 #     c_hook.error_thrown - mostly check if early processes error out; once TCP socket is connected, errors will essentially kill everything
-#     c_hook.data_sent - data was sent to external server (probably applicable to only UDP)
-#     c_hook.data_received - data was received from external server (probably applicable to only UDP)
+#     c_hook.data_sent - data was sent to external server
+#     c_hook.data_received - data was received from external server
+#
+#     Don't use these just yet. They don't do anything and act like stubs right now
 #     c_hook.use_tcp - long-term, I want to default to UDP for game development but right now, won't worry too much about this
 #     c_hook.use_ipv4 - default to using whichever IP spec makes the most sense (TCP); default to IPv6 for UDP
 #     c_hook.close_socket - close a TCP socket on next tick but don't destroy the connection altogether
@@ -74,30 +76,20 @@ class Socket
     c_hook.data_received != 0
   end
 
-  def use_tcp flag
-    c_hook.use_tcp = 1 if flag == true
-    c_hook.use_tcp = 0 if flag == false
-  end
-
-  def use_ipv4 flag
-    c_hook.use_ipv4 = 1 if flag == true
-    c_hook.use_ipv4 = 0 if flag == false
-  end
-
   def close_socket
-    c_hook.close_socket = 1
+    c_close
   end
 
-  def open_socket
-    c_hook.close_socket = 0
+  def open_socket address, port
+    c_open(address, port)
   end
 
   def shutdown_socket
-    c_hook.shutdown_socket = 1
+    c_shutdown()
   end
 
   # tick_count should be passed to c_tick so it can be used for calculations and internal iterations that are required
   def tick args
-    c_tick args.state.tick_count
+    c_tick(args.state.tick_count)
   end
 end
