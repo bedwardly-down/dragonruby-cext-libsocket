@@ -180,6 +180,8 @@ ssize_t c_send(const char* buf) {
   int return_value;
   struct msghdr *msg;
 
+  if (hook.data_sent == 1)
+    hook.data_sent = 0;
   if (-1 != (return_value = send(
     sfd, buf, strlen(buf), 0
   ))) {
@@ -195,6 +197,9 @@ ssize_t c_send(const char* buf) {
 ssize_t c_receive() {
   ssize_t bytes;
   char buf[MAX_BUFLEN];
+
+  if (hook.data_received == 1)
+    hook.data_received = 0;
   if (-1 != (bytes = recv(
     sfd, buf, strlen(buf), 0
   ))) {
