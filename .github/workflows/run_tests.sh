@@ -7,7 +7,10 @@ ruby .github/workflows/test-tcp-server.rb &
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ./dragonruby $TESTGAME_DIR
 
-if [ -f $TESTGAME_DIR/success ]; then
+dr_output=$(cat $TESTGAME_DIR/dr_output)
+echo "DR Output was: $dr_output"
+
+if [ $dr_output == "connected,sent" ]; then
   echo "Tests finished successfully."
   exit 0
 else
