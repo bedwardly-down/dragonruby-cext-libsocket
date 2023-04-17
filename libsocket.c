@@ -46,7 +46,7 @@
 /* definitions */
 #define LIBSOCKET_BACKLOG 128  ///< Linux accepts a backlog value at listen() up to 128
 #define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
-#define MAX_BUFLEN 80
+#define MAX_BUFLEN 4096
 
 /**
  * For Windows shutdown implementation compatibility
@@ -204,7 +204,6 @@ ssize_t c_receive() {
     return -1;
   }
   hook.data_received = 1;
-  puts(buf);
   return bytes;
 }
 
