@@ -22,7 +22,7 @@ on:
         type: string
       build_dr_version:
         type: string
-        default: '4.7'
+        default: '4.7' # Minimum required version
 
 env:
   TESTGAME_DIR: .github/workflows/testgame
@@ -54,6 +54,12 @@ jobs:
   test:
     needs:
       - build
+    strategy:
+      matrix:
+        dr_version:
+          - ${{ inputs.build_dr_version }}
+          - '4.8' # Current DR version
+      fail-fast: false
     runs-on: ${{ inputs.runner }}
     defaults:
       run:
@@ -61,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh ${{ inputs.build_dr_version }}
+        run: .github/workflows/download_dr_for_ci.sh ${{ matrix.dr_version }}
       - name: Download extension
         uses: actions/download-artifact@v3
         with:
