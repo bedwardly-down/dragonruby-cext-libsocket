@@ -1,4 +1,4 @@
-name: Test and Build
+name: Test and Build (All Platforms)
 
 on:
   workflow_dispatch:
@@ -17,34 +17,8 @@ jobs:
           - macos-12
         dr_version:
           - '4.7'
-    runs-on: ${{ matrix.runner }}
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v3
-      - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh ${{ matrix.dr_version }}
-      - name: Windows build settings
-        run: echo "MINGW_DIR=/C/ProgramData/chocolatey/lib/mingw/tools/install/mingw64" >> $GITHUB_ENV
-        if: runner.os == 'Windows'
-      - name: Build extension
-        run: scripts/build.sh $TESTGAME_DIR/native/$(scripts/dr_platform.sh)
-      - name: Run tests
-        run: .github/workflows/run_tests.sh
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dragonruby-cext-libsocket-linux-amd64
-          path: ${{ env.TESTGAME_DIR }}/native/linux-amd64/libsocket.so
-        if: runner.os == 'Linux'
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dragonruby-cext-libsocket-windows-amd64
-          path: ${{ env.TESTGAME_DIR }}/native/windows-amd64/libsocket.dll
-        if: runner.os == 'Windows'
-      - uses: actions/upload-artifact@v3
-        with:
-          name: dragonruby-cext-libsocket-macos
-          path: '${{ env.TESTGAME_DIR }}/native/macos/libsocket.dylib'
-        if: runner.os == 'macOS'
-
+      fail-fast: false
+    uses: ./.github/workflows/test-and-build-for-one-platform.yml
+    with:
+      runner: ${{ matrix.runner }}
+      dr_version: ${{ matrix.dr_version }}
