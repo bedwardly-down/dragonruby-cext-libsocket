@@ -39,7 +39,7 @@
 #     c_hook.socket_connected - is the socket connected?
 #     c_hook.error_thrown - mostly check if early processes error out; once TCP socket is connected, errors will essentially kill everything
 #     c_hook.data_sent - data was sent to external server (probably applicable to only UDP)
-#     c_hook.date_received - data was received from external server (probably applicable to only UDP)
+#     c_hook.data_received - data was received from external server (probably applicable to only UDP)
 #     c_hook.use_tcp - long-term, I want to default to UDP for game development but right now, won't worry too much about this
 #     c_hook.use_ipv4 - default to using whichever IP spec makes the most sense (TCP); default to IPv6 for UDP
 #     c_hook.close_socket - close a TCP socket on next tick but don't destroy the connection altogether
@@ -48,6 +48,52 @@
 class Socket
   def initialize address, port
     c_init(address, port)
+  end
+
+  def send_message message
+    c_send(message)
+  end
+
+  def receive_message message
+    c_receive(message)
+  end
+
+  def connected?
+    c_hook.socket_connected != 0
+  end
+
+  def errored?
+    c_hook.error_thrown != 0
+  end
+
+  def sent?
+    c_hook.data_sent != 0
+  end
+
+  def received?
+    c_hook.data_received != 0
+  end
+
+  def use_tcp flag
+    c_hook.use_tcp = 1 if flag == true
+    c_hook.use_tcp = 0 if flag == false
+  end
+
+  def use_ipv4 flag
+    c_hook.use_ipv4 = 1 if flag == true
+    c_hook.use_ipv4 = 0 if flag == false
+  end
+
+  def close_socket
+    c_hook.close_socket = 1
+  end
+
+  def open_socket
+    c_hook.close_socket = 0
+  end
+
+  def shutdown_socket
+    c_hook.shutdown_socket = 1
   end
 
   # tick_count should be passed to c_tick so it can be used for calculations and internal iterations that are required
