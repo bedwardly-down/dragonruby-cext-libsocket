@@ -11,8 +11,8 @@ on:
           - ubuntu-22.04
           - windows-2022
           - macos-12
-      dr_version:
-        description: 'DragonRuby version to build with'
+      build_dr_version:
+        description: 'DragonRuby version headers to build with'
         type: string
         default: '4.7'
   workflow_call:
@@ -20,7 +20,7 @@ on:
       runner:
         required: true
         type: string
-      dr_version:
+      build_dr_version:
         type: string
         default: '4.7'
 
@@ -41,7 +41,7 @@ jobs:
         id: determine_dr_platform
         run: echo "dr_platform=$(scripts/dr_platform.sh)" >> "$GITHUB_OUTPUT"
       - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh ${{ inputs.dr_version }}
+        run: .github/workflows/download_dr_for_ci.sh ${{ inputs.build_dr_version }}
       - name: Windows build settings
         run: echo "MINGW_DIR=/C/ProgramData/chocolatey/lib/mingw/tools/install/mingw64" >> $GITHUB_ENV
         if: runner.os == 'Windows'
@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download dragonruby
-        run: .github/workflows/download_dr_for_ci.sh ${{ inputs.dr_version }}
+        run: .github/workflows/download_dr_for_ci.sh ${{ inputs.build_dr_version }}
       - name: Download extension
         uses: actions/download-artifact@v3
         with:
