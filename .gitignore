@@ -1,4 +1,7 @@
 *.so
 *.dll
 *.dylib
+*.zip
+dragonruby*
+config.rb
 build/

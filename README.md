@@ -54,12 +54,21 @@ clang -shared \
 3) Add to the top of your `mygame/app/main.rb`:
 
 ```
+require 'libsocket/config.rb'
 require 'libsocket/socket.rb'
 $gtk.ffi_misc.gtk_dlopen("libsocket")
 include FFI::SOCKET
 ```
 
 That should be it.
+
+## Configuration
+
+To configure, make a copy of config.rb.sample as config.rb, replace the default variables with what you need and then insert them where you need them in your source as Config::<SOME VARIABLE IN CAPS>.
+
+Every project will have different requirements.
+
+NOTE: Do not commit code or open pull requests containing any kind of passwords or sensitive data. Once those get merged, it will be almost impossible to remove them from the repo.
 
 ## Basic example of how to start and end (won't allow for sending and receiving just yet; still testing)
 
