@@ -15,10 +15,7 @@ jobs:
           - ubuntu-22.04
           - windows-2022
           - macos-12
-        dr_version:
-          - '4.7'
       fail-fast: false
     uses: ./.github/workflows/test-and-build-for-one-platform.yml
     with:
       runner: ${{ matrix.runner }}
-      dr_version: ${{ matrix.dr_version }}
