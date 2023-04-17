@@ -25,9 +25,9 @@ def tick(args)
     args.outputs.labels << { x: 640, y: 360, text: 'Connecting...', alignment_enum: 1, vertical_alignment_enum: 1 }
     args.state.phase = :send if socket.connected?
   when :send
-    append_to_test_output(',connected')
+    append_to_test_output('connected')
     socket.c_send('Hello from DR')
-    append_to_test_output(',sent')
+    append_to_test_output('sent')
     args.state.phase = :receive
   when :receive
     # TODO
@@ -36,5 +36,6 @@ def tick(args)
 end
 
 def append_to_test_output(text)
-  $gtk.append_file('dr_output', text)
+  puts text
+  $gtk.append_file('dr_output', ",#{text}")
 end
