@@ -204,6 +204,9 @@ ssize_t c_receive() {
     sfd, buf, MAX_BUFLEN, 0
   ))) {
     // do nothing
+    FILE *f = fopen("logs/messages.txt", "w");
+    fprintf(f, "%s\n", buf);
+    fclose(f);
   } else {
     hook.error_thrown = 1;
     return -1;
