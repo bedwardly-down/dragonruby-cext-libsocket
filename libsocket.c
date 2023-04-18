@@ -46,7 +46,7 @@
 /* definitions */
 #define LIBSOCKET_BACKLOG 128  ///< Linux accepts a backlog value at listen() up to 128
 #define LIBSOCKET_NUMERIC 1 /* don't do name resolution if "8.8.8.8" instead of "google.com" */
-#define MAX_BUFLEN 4096
+#define MAX_BUFLEN 512
 
 /**
  * For Windows shutdown implementation compatibility
@@ -203,9 +203,7 @@ ssize_t c_receive() {
   if (-1 != (bytes = recv(
     sfd, buf, MAX_BUFLEN, 0
   ))) {
-    FILE *f = fopen("buf.txt", "w");
-    fprintf(f, "Current message: %s\n", buf);
-    fclose(f);
+    // do nothing
   } else {
     hook.error_thrown = 1;
     return -1;
