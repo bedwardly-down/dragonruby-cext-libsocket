@@ -194,7 +194,7 @@ ssize_t c_send(const char* buf) {
   return return_value;
 }
 
-ssize_t c_receive() {
+ssize_t c_receive(char *path) {
   ssize_t bytes;
   char buf[MAX_BUFLEN];
 
@@ -203,8 +203,12 @@ ssize_t c_receive() {
   if (-1 != (bytes = recv(
     sfd, buf, MAX_BUFLEN, 0
   ))) {
-    // do nothing
-    FILE *f = fopen("logs/messages.txt", "w");
+    /* go ahead and create the file at the path; then append to it afterwards */
+    FILE *f = fopen(path, "w");
+    fprintf(f, " ");
+    fclose(f);
+
+    f = fopen(path, "a");
     fprintf(f, "%s\n", buf);
     fclose(f);
   } else {
