@@ -33,6 +33,11 @@ def tick(args)
     # TODO
     $gtk.request_quit
   end
+
+  if args.state.tick_count >= 600
+    append_to_test_output('timeout')
+    $gtk.request_quit
+  end
 end
 
 def append_to_test_output(text)
