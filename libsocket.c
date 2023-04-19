@@ -198,16 +198,18 @@ ssize_t c_receive(char *path) {
   ssize_t bytes;
   char buf[MAX_BUFLEN];
 
+  /* go ahead and create the file at the path if it doesn't exist; then append to it afterwards */
+  FILE *f;
+  if (access(path, F_OK) != 0) {
+    f = fopen(path, "w");
+    fprintf(f, " ");
+    fclose(f);
+  }
   if (hook.data_received == 1)
     hook.data_received = 0;
   if (-1 != (bytes = recv(
     sfd, buf, MAX_BUFLEN, 0
   ))) {
-    /* go ahead and create the file at the path; then append to it afterwards */
-    FILE *f = fopen(path, "w");
-    fprintf(f, " ");
-    fclose(f);
-
     f = fopen(path, "a");
     fprintf(f, "%s\n", buf);
     fclose(f);

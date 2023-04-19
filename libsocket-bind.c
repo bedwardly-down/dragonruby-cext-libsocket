@@ -53,6 +53,10 @@
 #define _WINSOCKAPI_
 #include <winsock2.h>
 #include <ws2tcpip.h>
+/* check if file exists for writing the receive() buffer */
+#include <io.h>
+#define F_OK 0
+#define access _access
 #elif defined(linux) || defined(__APPLE__)
 #include <sys/socket.h>
 #include <net/if.h>
