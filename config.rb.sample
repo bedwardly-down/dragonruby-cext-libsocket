@@ -1,5 +1,0 @@
-module Config
-  USER = "test_user"
-  PASS = "Dragonruby Slays"
-  FAV_FOOD = "Cheesecake"
-end
