@@ -196,13 +196,15 @@ ssize_t c_send(const char* buf) {
 
 char *c_receive() {
   ssize_t bytes;
-  char *buf;
+  char buf[MAX_BUFLEN];
+  char *ret;
 
   if (hook.data_received == 1)
     hook.data_received = 0;
   if (-1 != (bytes = recv(
     sfd, buf, MAX_BUFLEN, 0
   ))) {
+    ret = buf;
     // do nothing here
   } else {
     hook.error_thrown = 1;
@@ -210,7 +212,7 @@ char *c_receive() {
   }
 
   hook.data_received = 1;
-  return buf;
+  return ret;
 }
 
 int c_open(char *address, char *port) {
