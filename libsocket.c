@@ -194,32 +194,23 @@ ssize_t c_send(const char* buf) {
   return return_value;
 }
 
-ssize_t c_receive(char *path) {
+char *c_receive() {
   ssize_t bytes;
-  char buf[MAX_BUFLEN];
+  char *buf;
 
-  /* go ahead and create the file at the path if it doesn't exist; then append to it afterwards */
-  FILE *f;
-  if (access(path, F_OK) != 0) {
-    f = fopen(path, "w");
-    fprintf(f, " ");
-    fclose(f);
-  }
   if (hook.data_received == 1)
     hook.data_received = 0;
   if (-1 != (bytes = recv(
     sfd, buf, MAX_BUFLEN, 0
   ))) {
-    f = fopen(path, "a");
-    fprintf(f, "%s\n", buf);
-    fclose(f);
+    // do nothing here
   } else {
     hook.error_thrown = 1;
-    return -1;
+    return "Error";
   }
 
   hook.data_received = 1;
-  return bytes;
+  return buf;
 }
 
 int c_open(char *address, char *port) {
